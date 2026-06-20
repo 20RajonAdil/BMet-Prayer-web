@@ -1,5 +1,5 @@
 {
-  "background_color": "#ffffff",
+  "background_color": "#0e0e0e",
   "dir": "ltr",
   "display": "standalone",
   "name": "BMet Prayer",
@@ -7,10 +7,28 @@
   "scope": "/Adil.Talha.html",
   "short_name": "BMet Prayer",
   "start_url": "/Adil.Talha.html",
-  "theme_color": "#ffffff",
+  "theme_color": "#1b1a1a",
   "categories": [
     "events",
     "lifestyle"
   ],
-  "id": "/Adil.Talha.html"
+  "id": "/Adil.Talha.html",
+  "lang": "en",
+  "description": "https://20rajonadil.github.io/BMet-Prayer-web/Adil.Talha.html",
+  "display_override": [
+    "browser",
+    "fullscreen",
+    "minimal-ui",
+    "standalone",
+    "window-controls-overlay"
+  ],
+  "share_target": {
+    "method": "GET",
+    "action": "/Adil.Talha.html",
+    "params": {
+      "title": "BMet Prayer",
+      "url": "https://20rajonadil.github.io/BMet-Prayer-web/Adil.Talha.html",
+      "files": []
+    }
+  }
 }
