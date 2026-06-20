@@ -1,0 +1,16 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "BMet Prayer",
+  "orientation": "any",
+  "scope": "/Adil.Talha.html",
+  "short_name": "BMet Prayer",
+  "start_url": "/Adil.Talha.html",
+  "theme_color": "#ffffff",
+  "categories": [
+    "events",
+    "lifestyle"
+  ],
+  "id": "/Adil.Talha.html"
+}
