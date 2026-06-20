@@ -1,34 +1,42 @@
 {
-  "background_color": "#0e0e0e",
-  "dir": "ltr",
-  "display": "standalone",
-  "name": "BMet Prayer",
-  "orientation": "any",
-  "scope": "/Adil.Talha.html",
+  "name": "BMet Prayer Time",
   "short_name": "BMet Prayer",
+  "description": "Prayer times app for BMet College community with live updates, countdown, and location-based timings.",
+
   "start_url": "/Adil.Talha.html",
-  "theme_color": "#1b1a1a",
-  "categories": [
-    "events",
-    "lifestyle"
-  ],
-  "id": "/Adil.Talha.html",
-  "lang": "en",
-  "description": "https://20rajonadil.github.io/BMet-Prayer-web/Adil.Talha.html",
-  "display_override": [
-    "browser",
-    "fullscreen",
-    "minimal-ui",
-    "standalone",
-    "window-controls-overlay"
-  ],
-  "share_target": {
-    "method": "GET",
-    "action": "/Adil.Talha.html",
-    "params": {
-      "title": "BMet Prayer",
-      "url": "https://20rajonadil.github.io/BMet-Prayer-web/Adil.Talha.html",
-      "files": []
+  "scope": "/",
+  "display": "standalone",
+
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+
+  "orientation": "portrait-primary",
+
+  "lang": "en-GB",
+  "dir": "ltr",
+
+  "categories": ["lifestyle", "education", "religion"],
+
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
-  }
+  ],
+
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ],
+
+  "id": "bmet-prayer-app"
 }
