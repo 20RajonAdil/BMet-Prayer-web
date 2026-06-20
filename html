@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMET Prayer Time • BMET College Community</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:wght@700&amp;display=swap');
+       
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+       
+        .prayer-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .prayer-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .section-card {
+            background: #111827;
+            border: 1px solid #1f2937;
+        }
+        .mosque-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .mosque-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('https://picsum.photos/id/1016/1200/800') center/cover;
+            opacity: 0.15;
+            z-index: 0;
+        }
+        .prayer-time-item {
+            transition: all 0.2s ease;
+        }
+        .prayer-time-item.highlight {
+            background: linear-gradient(90deg, #451a03, #78350f);
+            border: 1px solid #f59e0b;
+            box-shadow: 0 0 0 1px #f59e0b;
+        }
+        .countdown {
+            font-variant-numeric: tabular-nums;
+        }
+        .modal {
+            animation: modalPop 0.2s ease forwards;
+        }
+        @keyframes modalPop {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .lantern {
+            animation: lanternGlow 3s ease-in-out infinite;
+        }
+        .location-label {
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-200">
+    <!-- Header / Navbar -->
+    <nav class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50">
+        <div class="max-w-screen-xl mx-auto">
+            <div class="px-8 py-4 flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center gap-x-3 cursor-pointer" id="logo-container">
+                    <img src="bmet-logo.png" class="w-11 h-11 object-contain" alt="BMET Logo">
+                    <div>
+                        <div class="flex items-baseline gap-x-1">
+                            <span class="font-black text-3xl tracking-[-2.5px]">BMET</span>
+                        </div>
+                        <div class="text-[10px] text-emerald-400 -mt-1.5 font-medium tracking-[1px]">INSPIRING FUTURES</div>
+                    </div>
+                </div>
+                
+                <!-- Right side -->
+                <div class="flex items-center gap-x-3">
+                    <!-- Refresh Prayer Times Button -->
+                    <button onclick="refreshPrayerTimes()"
+                            class="flex items-center gap-x-2 px-4 py-2 text-sm font-medium rounded-3xl bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-800 text-emerald-400 transition-colors">
+                        <i class="fa-solid fa-sync-alt"></i>
+                        <span class="hidden sm:inline">Refresh</span>
+                    </button>
+                    
+                    <!-- Location Button -->
+                    <button onclick="detectUserLocation()"
+                            class="flex items-center gap-x-2 px-4 py-2 text-sm font-medium rounded-3xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 transition-colors text-emerald-400">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span class="hidden sm:inline">My Location</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero / Greeting Section -->
+    <div id="home-section" class="max-w-screen-xl mx-auto px-6 pt-8 pb-4">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+           
+            <!-- Left Greeting Card -->
+            <div class="lg:col-span-5 rounded-3xl overflow-hidden relative shadow-2xl border border-zinc-800">
+                <div class="mosque-bg h-full min-h-[420px] p-8 flex flex-col justify-between relative z-10">
+                    <div>
+                        <div class="inline-flex items-center gap-x-2 px-4 py-1.5 rounded-3xl bg-emerald-950/80 border border-emerald-900 text-emerald-400 text-sm font-medium mb-4">
+                            <i class="fa-solid fa-mosque"></i>
+                            <span>As-salamu alaykum</span>
+                        </div>
+                       
+                        <h1 class="text-5xl lg:text-6xl leading-[1.05] font-bold tracking-tighter text-white">
+                            It’s time to<br>connect with<br>Allah
+                        </h1>
+                        <div class="w-16 h-px bg-gradient-to-r from-emerald-400 to-transparent my-6"></div>
+                    </div>
+                   
+                    <div class="text-emerald-300 text-sm flex items-center gap-x-2">
+                        <i class="fa-solid fa-heart text-red-400"></i>
+                        <span class="font-medium">BMET College Community</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Next Prayer Countdown -->
+            <div class="lg:col-span-4 rounded-3xl section-card p-8 flex flex-col shadow-xl border border-zinc-800">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <div class="uppercase tracking-[2px] text-xs font-semibold text-emerald-400">NEXT PRAYER</div>
+                        <div id="next-prayer-name" class="text-4xl font-bold text-white mt-1">Dhuhr</div>
+                    </div>
+                    <div class="w-14 h-14 bg-emerald-900/30 rounded-2xl flex items-center justify-center border border-emerald-800">
+                        <i class="fa-solid fa-sun text-4xl text-emerald-400"></i>
+                    </div>
+                </div>
+               
+                <div class="flex-1 flex flex-col justify-center">
+                    <div class="text-center">
+                        <div class="text-emerald-400 text-sm font-medium tracking-widest mb-1">REMAINING</div>
+                        <div id="countdown-timer"
+                             class="countdown text-7xl font-mono font-black tabular-nums tracking-[-3px] text-white">
+                            01:24:35
+                        </div>
+                    </div>
+                </div>
+               
+                <div class="mt-auto pt-6 border-t border-zinc-700 flex items-center justify-between text-sm">
+                    <div class="flex items-center gap-x-2 text-zinc-400">
+                        <i class="fa-regular fa-calendar"></i>
+                        <span id="current-date">Loading...</span>
+                    </div>
+                    <div class="text-emerald-400 text-xs font-mono" id="hijri-date">Loading Hijri...</div>
+                </div>
+            </div>
+            
+            <!-- Site Owner + Team Card -->
+            <div class="lg:col-span-3 rounded-3xl section-card p-6 flex flex-col border border-zinc-800">
+                
+                <!-- Two Picture Options -->
+                <div class="flex justify-center gap-5 mb-5">
+                    
+                    <!-- OWNER PHOTO -->
+                    <div class="text-center">
+                        <div class="relative inline-block">
+                            <!-- === CHANGE OWNER PHOTO HERE === -->
+                            <!-- Replace the src below with your owner's photo URL or local path -->
+                            <img src="https://picsum.photos/id/1005/110/110"
+                                 class="w-20 h-20 rounded-full object-cover border-4 border-zinc-700 shadow-xl"
+                                 alt="Site Owner">
+                            <div class="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-zinc-900">
+                                <i class="fa-solid fa-crown text-yellow-900 text-[10px]"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="font-semibold text-sm">Site Owner</div>
+                            <div class="text-emerald-400 text-[10px]">Founder</div>
+                        </div>
+                    </div>
+                    
+                    <!-- DEVELOPER PHOTO -->
+                    <div class="text-center">
+                        <div class="relative inline-block">
+                            <!-- === CHANGE DEVELOPER PHOTO HERE === -->
+                            <!-- Replace the src below with your developer's photo URL or local path -->
+                            <img src="https://picsum.photos/id/1011/110/110"
+                                 class="w-20 h-20 rounded-full object-cover border-4 border-zinc-700 shadow-xl"
+                                 alt="Developer">
+                            <div class="absolute -top-1 -right-1 w-6 h-6 bg-emerald-400 rounded-full flex items-center justify-center border-2 border-zinc-900">
+                                <i class="fa-solid fa-laptop-code text-emerald-900 text-[10px]"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="font-semibold text-sm">Developer</div>
+                            <div class="text-emerald-400 text-[10px]">Student Lead</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Name -->
+                <div class="text-center mb-1">
+                    <span class="font-semibold">BMET Prayer Time Team</span>
+                </div>
+                <div class="text-emerald-400 text-xs tracking-widest mb-4">Keeping the community connected</div>
+
+                <!-- Beautiful Message -->
+                <div class="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4 mb-3">
+                    <div class="text-emerald-400 text-xs font-semibold tracking-wider mb-1.5 flex items-center gap-x-1.5">
+                        <i class="fa-solid fa-heart"></i>
+                        <span>A BEAUTIFUL REMINDER</span>
+                    </div>
+                    <p class="text-sm text-zinc-300 leading-relaxed">
+                        “May Allah accept our efforts and make this platform a means of drawing our entire BMET family closer to Him. 
+                        May every prayer time notification soften our hearts and remind us of the peace that comes from remembering our Creator.”
+                    </p>
+                </div>
+
+                <!-- Strong Message -->
+                <div class="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4">
+                    <div class="text-amber-400 text-xs font-semibold tracking-wider mb-1.5 flex items-center gap-x-1.5">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>A STRONG COMMITMENT</span>
+                    </div>
+                    <p class="text-sm text-zinc-300 leading-relaxed">
+                        “We are not just showing prayer times — we are building a reminder. 
+                        In the rush of college life, let us never compromise our Salah. 
+                        This is our legacy of faith for the next generation at BMET.”
+                    </p>
+                </div>
+
+                <div class="mt-auto pt-4 text-center">
+                    <div class="text-yellow-400 text-xs italic">— With love &amp; dua from the BMET Prayer Team</div>
+                </div>
+            </div>
+            
+            <!-- Today's Prayer Times -->
+            <div class="lg:col-span-7 rounded-3xl section-card p-8 border border-zinc-800">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-x-3">
+                        <i class="fa-solid fa-clock text-2xl text-emerald-400"></i>
+                        <div>
+                            <div class="font-semibold text-xl">Today's Prayer Times</div>
+                            <div class="text-xs text-emerald-400 flex items-center gap-x-1 location-label" id="location-label">
+                                <i class="fa-solid fa-globe fa-xs"></i>
+                                <span>Birmingham, UK • Live via Aladhan API</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="showFullTimetable()"
+                            class="flex items-center gap-x-2 px-5 py-2.5 text-sm font-medium rounded-3xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 transition-all active:scale-[0.985]">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Full Timetable</span>
+                    </button>
+                </div>
+                <div class="space-y-2" id="prayer-times-list">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Upcoming Jumu'ah -->
+            <div class="lg:col-span-5 rounded-3xl section-card p-8 border border-zinc-800 flex flex-col">
+                <div class="flex items-center gap-x-3 mb-5">
+                    <div class="w-9 h-9 bg-amber-900/30 rounded-2xl flex items-center justify-center">
+                        <i class="fa-solid fa-calendar text-amber-400 text-xl"></i>
+                    </div>
+                    <div class="font-semibold text-xl">Upcoming Jumu'ah</div>
+                </div>
+               
+                <div class="flex-1 flex flex-col justify-center">
+                    <div class="text-center">
+                        <div class="text-6xl font-black text-white tabular-nums tracking-tighter">01:15 <span class="text-3xl font-semibold text-zinc-400">PM</span></div>
+                        <div class="mt-1 text-emerald-400 font-medium">Jumu'ah Prayer • Every Friday</div>
+                    </div>
+                </div>
+               
+                <div class="text-xs text-center text-zinc-500 mt-4">
+                    Main Hall • All students &amp; staff welcome
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Section: Announcements + Verse -->
+    <div id="announcements-section" class="max-w-screen-xl mx-auto px-6 pb-12">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+           
+            <!-- Announcements -->
+            <div class="rounded-3xl section-card p-7 border border-zinc-800">
+                <div class="flex items-center gap-x-3 mb-5">
+                    <i class="fa-solid fa-bullhorn text-emerald-400 text-xl"></i>
+                    <div class="font-semibold text-xl">Announcements</div>
+                </div>
+               
+                <ul class="space-y-4 text-sm">
+                    <li class="flex gap-x-3">
+                        <span class="mt-1.5 block w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                        <span>Jumu'ah prayer at <strong>1:15 PM</strong> every Friday in the Main Hall.</span>
+                    </li>
+                    <li class="flex gap-x-3">
+                        <span class="mt-1.5 block w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                        <span>Quran Study Circle every Wednesday at <strong>4:30 PM</strong>.</span>
+                    </li>
+                    <li class="flex gap-x-3">
+                        <span class="mt-1.5 block w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                        <span>Please keep your phones on silent in the prayer area.</span>
+                    </li>
+                    <li class="flex gap-x-3">
+                        <span class="mt-1.5 block w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                        <span>Sisters' prayer room is located on <strong>Level 2</strong>.</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Quranic Verse -->
+            <div class="lg:col-span-2 rounded-3xl section-card p-8 border border-zinc-800 relative overflow-hidden">
+                <div class="flex justify-between">
+                    <div class="max-w-md">
+                        <div class="text-emerald-400 text-xs tracking-[2px] font-semibold mb-3">FROM THE QURAN</div>
+                       
+                        <div class="text-xl leading-tight font-medium text-white mb-4">
+                            “Indeed, prayer is decreed upon the believers a decree of specified times.”
+                        </div>
+                       
+                        <div class="text-emerald-400 text-sm font-medium">
+                            — Surah An-Nisa 4:103
+                        </div>
+                    </div>
+                   
+                    <div class="hidden lg:block">
+                        <div class="lantern w-14 h-14 flex items-center justify-center">
+                            <i class="fa-solid fa-lightbulb text-5xl text-yellow-400 drop-shadow-[0_0_12px_rgb(234,179,8)]"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-zinc-900 border-t border-zinc-800 py-8">
+        <div class="max-w-screen-xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-y-4 text-sm">
+                <div>
+                    <div class="font-semibold">BMET College</div>
+                    <div class="text-xs text-zinc-500">Inspiring futures, realising dreams.</div>
+                </div>
+               
+                <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-zinc-400">
+                    <div class="flex items-center gap-x-1.5">
+                        <i class="fa-solid fa-location-dot text-emerald-400"></i>
+                        <span>Multiple Campuses • West Midlands, UK</span>
+                    </div>
+                    <div class="flex items-center gap-x-1.5">
+                        <i class="fa-solid fa-envelope text-emerald-400"></i>
+                        <span>info@bmet.ac.uk</span>
+                    </div>
+                    <div class="flex items-center gap-x-1.5">
+                        <i class="fa-solid fa-phone text-emerald-400"></i>
+                        <span>0121 446 4545</span>
+                    </div>
+                </div>
+               
+                <div class="text-xs text-zinc-500">
+                    © 2026 BMET College • All rights reserved
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Full Timetable Modal -->
+    <div id="timetable-modal" onclick="if (event.target.id === 'timetable-modal') hideModal()" class="hidden fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="modal bg-zinc-900 border border-zinc-700 rounded-3xl max-w-2xl w-full p-8">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <div class="font-bold text-2xl">Full Prayer Timetable</div>
+                    <div class="text-emerald-400 text-sm">Example weekly view (live times shown above)</div>
+                </div>
+                <button onclick="hideModal()" class="text-3xl leading-none text-zinc-400 hover:text-white">&times;</button>
+            </div>
+           
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-zinc-700 text-left text-emerald-400">
+                        <th class="py-3 font-medium">Day</th>
+                        <th class="py-3 font-medium">Fajr</th>
+                        <th class="py-3 font-medium">Dhuhr</th>
+                        <th class="py-3 font-medium">Asr</th>
+                        <th class="py-3 font-medium">Maghrib</th>
+                        <th class="py-3 font-medium">Isha</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800 text-white">
+                    <tr><td class="py-3 font-medium">Sunday</td><td>04:15</td><td class="text-amber-400 font-semibold">13:15</td><td>17:30</td><td>21:20</td><td>22:45</td></tr>
+                    <tr><td class="py-3 font-medium">Monday</td><td>04:14</td><td>13:15</td><td>17:31</td><td>21:21</td><td>22:46</td></tr>
+                    <tr><td class="py-3 font-medium">Tuesday</td><td>04:13</td><td>13:16</td><td>17:32</td><td>21:22</td><td>22:47</td></tr>
+                    <tr><td class="py-3 font-medium">Wednesday</td><td>04:12</td><td>13:16</td><td>17:33</td><td>21:23</td><td>22:48</td></tr>
+                    <tr><td class="py-3 font-medium">Thursday</td><td>04:11</td><td>13:17</td><td>17:34</td><td>21:24</td><td>22:49</td></tr>
+                    <tr><td class="py-3 font-medium">Friday</td><td>04:10</td><td>13:17</td><td>17:35</td><td>21:25</td><td>22:50</td></tr>
+                    <tr><td class="py-3 font-medium">Saturday</td><td>04:09</td><td>13:18</td><td>17:36</td><td>21:26</td><td>22:51</td></tr>
+                </tbody>
+            </table>
+           
+            <div class="mt-6 text-center">
+                <button onclick="hideModal()"
+                        class="px-8 py-3 text-sm font-semibold rounded-3xl bg-emerald-600 hover:bg-emerald-500 transition-colors">
+                    Close Timetable
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let prayerTimesData = {};
+        let isLoadingPrayerTimes = true;
+        let nextPrayerName = null;
+        let nextPrayerDate = null;
+        let hijriDate = "";
+        let currentLocationMode = 'city'; // 'city' or 'coords'
+        let currentCoords = null;
+
+        // Logo click → Assalamu Alaikum
+        function setupLogoClick() {
+            const logo = document.getElementById('logo-container');
+            if (logo) {
+                logo.addEventListener('click', () => {
+                    const originalHTML = logo.innerHTML;
+                    logo.innerHTML = `
+                        <div class="flex items-center gap-x-3">
+                            <img src="bmet-logo.png" class="w-11 h-11 object-contain" alt="BMET Logo">
+                            <span class="text-emerald-400 font-semibold text-xl">Assalamu Alaikum</span>
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        logo.innerHTML = originalHTML;
+                    }, 2200);
+                });
+            }
+        }
+
+        // Update current date
+        function updateCurrentDate() {
+            const dateEl = document.getElementById('current-date');
+            if (!dateEl) return;
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            dateEl.textContent = new Date().toLocaleDateString('en-GB', options);
+        }
+
+        // Fetch prayer times (supports city or coordinates)
+        async function fetchPrayerTimes(useCoords = false) {
+            const container = document.getElementById('prayer-times-list');
+            const locationLabel = document.getElementById('location-label');
+            
+            if (container) {
+                container.innerHTML = `
+                    <div class="flex items-center justify-center py-8 text-emerald-400">
+                        <i class="fa-solid fa-spinner fa-spin mr-3 text-xl"></i>
+                        <span>Loading prayer times...</span>
+                    </div>
+                `;
+            }
+
+            try {
+                let url;
+                let locationText = "Birmingham, UK • Live via Aladhan API";
+
+                if (useCoords && currentCoords) {
+                    const { lat, lon } = currentCoords;
+                    const date = new Date().toISOString().split('T')[0];
+                    url = `https://api.aladhan.com/v1/timings/${date}?latitude=${lat}&longitude=${lon}&method=2`;
+                    locationText = "Your current location • Live via Aladhan API";
+                    currentLocationMode = 'coords';
+                } else {
+                    // Default to Birmingham
+                    const city = "Birmingham";
+                    const country = "United Kingdom";
+                    url = `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=2`;
+                    currentLocationMode = 'city';
+                }
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.code === 200 && result.data && result.data.timings) {
+                    const timings = result.data.timings;
+                    
+                    prayerTimesData = {
+                        "Fajr": timings.Fajr,
+                        "Dhuhr": timings.Dhuhr,
+                        "Asr": timings.Asr,
+                        "Maghrib": timings.Maghrib,
+                        "Isha": timings.Isha
+                    };
+
+                    // Update Hijri date
+                    if (result.data.date && result.data.date.hijri) {
+                        const h = result.data.date.hijri;
+                        hijriDate = `${h.day} ${h.month.en} ${h.year}`;
+                        const hijriEl = document.getElementById('hijri-date');
+                        if (hijriEl) hijriEl.textContent = hijriDate;
+                    }
+
+                    // Update location label
+                    if (locationLabel) {
+                        locationLabel.innerHTML = `
+                            <i class="fa-solid fa-globe fa-xs"></i>
+                            <span>${locationText}</span>
+                        `;
+                    }
+
+                    isLoadingPrayerTimes = false;
+                    console.log('%c[BMET] Prayer times loaded successfully', 'color:#10b981');
+                } else {
+                    throw new Error("Invalid API response");
+                }
+            } catch (error) {
+                console.error("Failed to fetch prayer times:", error);
+                
+                // Fallback times (Birmingham approximate)
+                prayerTimesData = {
+                    "Fajr": "03:45",
+                    "Dhuhr": "13:10",
+                    "Asr": "17:25",
+                    "Maghrib": "21:30",
+                    "Isha": "23:00"
+                };
+                isLoadingPrayerTimes = false;
+
+                if (locationLabel) {
+                    locationLabel.innerHTML = `
+                        <i class="fa-solid fa-exclamation-triangle fa-xs"></i>
+                        <span>Using offline fallback times</span>
+                    `;
+                }
+                
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-4 text-amber-400 text-sm">
+                            <i class="fa-solid fa-exclamation-triangle mr-2"></i>
+                            Using offline fallback times. Please check your internet connection.
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Detect user's location using browser geolocation
+        function detectUserLocation() {
+            const btns = document.querySelectorAll('button[onclick*="detectUserLocation"]');
+            btns.forEach(b => b.disabled = true);
+
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser.");
+                btns.forEach(b => b.disabled = false);
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    currentCoords = {
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude
+                    };
+                    
+                    await fetchPrayerTimes(true); // true = use coordinates
+                    renderPrayerTimesList();
+                    calculateNextPrayer();
+                    updateCountdown();
+                    
+                    btns.forEach(b => b.disabled = false);
+                    
+                    // Toast
+                    showToast("Location detected! Prayer times updated.");
+                },
+                (error) => {
+                    console.error("Geolocation error:", error);
+                    btns.forEach(b => b.disabled = false);
+                    
+                    let message = "Could not get your location.";
+                    if (error.code === 1) message = "Location permission denied.";
+                    else if (error.code === 2) message = "Location unavailable.";
+                    
+                    alert(message + " Using Birmingham as default.");
+                }
+            );
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-6 py-3 rounded-3xl shadow-xl flex items-center gap-x-2 text-sm z-[200]`;
+            toast.innerHTML = `<i class="fa-solid fa-check"></i> <span>${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2200);
+        }
+
+        function parseTimeToDate(timeStr, addDay = false) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            if (addDay) date.setDate(date.getDate() + 1);
+            return date;
+        }
+
+        function calculateNextPrayer() {
+            const now = new Date();
+            let foundNext = false;
+
+            for (const [name, timeStr] of Object.entries(prayerTimesData)) {
+                const prayerTime = parseTimeToDate(timeStr);
+                if (prayerTime > now) {
+                    nextPrayerName = name;
+                    nextPrayerDate = prayerTime;
+                    foundNext = true;
+                    break;
+                }
+            }
+
+            if (!foundNext) {
+                nextPrayerName = "Fajr";
+                nextPrayerDate = parseTimeToDate(prayerTimesData["Fajr"], true);
+            }
+
+            return { name: nextPrayerName, date: nextPrayerDate };
+        }
+
+        function updateCountdown() {
+            if (!nextPrayerDate) return;
+
+            const now = new Date();
+            let diff = nextPrayerDate - now;
+
+            if (diff <= 0) {
+                calculateNextPrayer();
+                diff = nextPrayerDate - now;
+            }
+
+            const totalSeconds = Math.floor(diff / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            const display = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            const timerEl = document.getElementById('countdown-timer');
+            if (timerEl) timerEl.textContent = display;
+
+            const nameEl = document.getElementById('next-prayer-name');
+            if (nameEl) nameEl.textContent = nextPrayerName;
+        }
+
+        function renderPrayerTimesList() {
+            const container = document.getElementById('prayer-times-list');
+            if (!container) return;
+
+            if (isLoadingPrayerTimes || Object.keys(prayerTimesData).length === 0) {
+                return;
+            }
+
+            container.innerHTML = '';
+            const { name: nextName } = calculateNextPrayer();
+
+            const icons = {
+                "Fajr": "fa-moon",
+                "Dhuhr": "fa-sun",
+                "Asr": "fa-cloud-sun",
+                "Maghrib": "fa-sunset",
+                "Isha": "fa-moon"
+            };
+
+            const colors = {
+                "Fajr": "text-sky-400",
+                "Dhuhr": "text-amber-400",
+                "Asr": "text-orange-400",
+                "Maghrib": "text-rose-400",
+                "Isha": "text-indigo-400"
+            };
+
+            Object.entries(prayerTimesData).forEach(([name, time]) => {
+                const isNext = name === nextName;
+
+                const div = document.createElement('div');
+                div.className = `prayer-time-item flex items-center justify-between px-5 py-4 rounded-2xl ${isNext ? 'highlight' : 'bg-zinc-900 hover:bg-zinc-800'} border border-zinc-700`;
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-x-4">
+                        <div class="w-9 h-9 flex-shrink-0 rounded-2xl flex items-center justify-center ${isNext ? 'bg-amber-900/50' : 'bg-zinc-800'}">
+                            <i class="fa-solid ${icons[name]} text-xl ${colors[name]}"></i>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-lg">${name}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-mono text-2xl font-semibold tabular-nums ${isNext ? 'text-amber-300' : 'text-white'}">${time}</div>
+                        <div class="text-[10px] text-zinc-500 -mt-0.5">${isNext ? 'NEXT PRAYER' : ''}</div>
+                    </div>
+                `;
+
+                div.onclick = () => {
+                    navigator.clipboard.writeText(time).then(() => {
+                        const originalText = div.innerHTML;
+                        div.innerHTML = `<div class="flex items-center justify-center w-full py-3 text-emerald-400 font-medium"><i class="fa-solid fa-check mr-2"></i> Copied ${time}!</div>`;
+                        setTimeout(() => {
+                            div.innerHTML = originalText;
+                        }, 1400);
+                    }).catch(() => {
+                        alert('Time copied: ' + time);
+                    });
+                };
+
+                container.appendChild(div);
+            });
+        }
+
+        // Modal functions
+        function showFullTimetable() {
+            document.getElementById('timetable-modal').classList.remove('hidden');
+            document.getElementById('timetable-modal').classList.add('flex');
+        }
+
+        function hideModal() {
+            const modal = document.getElementById('timetable-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        // Refresh prayer times
+        async function refreshPrayerTimes() {
+            const refreshBtns = document.querySelectorAll('button[onclick*="refreshPrayerTimes"]');
+            refreshBtns.forEach(b => b.disabled = true);
+
+            const useCoords = currentLocationMode === 'coords' && currentCoords;
+            await fetchPrayerTimes(useCoords);
+            renderPrayerTimesList();
+            calculateNextPrayer();
+            updateCountdown();
+
+            setTimeout(() => {
+                refreshBtns.forEach(b => b.disabled = false);
+            }, 800);
+
+            showToast("Prayer times refreshed!");
+        }
+
+        // Main initialization
+        async function initializeWebsite() {
+            updateCurrentDate();
+            setupLogoClick();
+
+            // Load default prayer times for Birmingham
+            await fetchPrayerTimes(false);
+
+            renderPrayerTimesList();
+            calculateNextPrayer();
+            updateCountdown();
+
+            // Update countdown every second
+            setInterval(updateCountdown, 1000);
+
+            // Refresh prayer list every minute
+            setInterval(() => {
+                renderPrayerTimesList();
+                calculateNextPrayer();
+            }, 60000);
+
+            // Keyboard support
+            document.addEventListener('keydown', function(e) {
+                if (e.key === "Escape") {
+                    const openModal = document.querySelector('.fixed.inset-0');
+                    if (openModal) openModal.remove();
+                }
+            });
+
+            console.log('%c[BMET] Prayer Time website ready with location support!', 'color:#10b981');
+        }
+
+        window.onload = initializeWebsite;
+    </script>
+</body>
+</html>
