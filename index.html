@@ -6,7 +6,10 @@
     <meta name="theme-color" content="#0E4B3A">
     <title>BMet Prayer Time • BMet College Community</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="bmet-logo.png">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -408,10 +411,6 @@
             </div>
 
             <div class="events-masonry" id="events-gallery"></div>
-
-            <div class="text-xs text-inksoft mt-2 text-center" id="events-empty-hint" style="display:none;">
-                No event posters yet — add <code class="text-green font-medium">picture-one.jpg</code> through <code class="text-green font-medium">picture-five.jpg</code> to this folder in GitHub and they'll appear here automatically, any size or shape.
-            </div>
         </div>
     </div>
 
@@ -550,6 +549,31 @@
             dateEl.textContent = new Date().toLocaleDateString('en-GB', options);
         }
 
+        // Hijri date, computed locally in the browser (Umm al-Qura calendar) so it's
+        // always correct and doesn't depend on the prayer-times API being reachable.
+        function updateHijriDate() {
+            const hijriEl = document.getElementById('hijri-date');
+            if (!hijriEl) return;
+            try {
+                const formatter = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
+                    day: 'numeric', month: 'long', year: 'numeric'
+                });
+                const parts = formatter.formatToParts(new Date());
+                const day = parts.find(p => p.type === 'day')?.value;
+                const month = parts.find(p => p.type === 'month')?.value;
+                const year = parts.find(p => p.type === 'year')?.value;
+                if (day && month && year) {
+                    hijriDate = `${day} ${month} ${year} AH`;
+                    hijriEl.textContent = hijriDate;
+                } else {
+                    throw new Error("Could not read Hijri date parts");
+                }
+            } catch (e) {
+                console.log("Hijri (Islamic) calendar not supported in this browser:", e.message);
+                hijriEl.textContent = "";
+            }
+        }
+
         // Fetch prayer times (supports city or coordinates)
         async function fetchPrayerTimes(useCoords = false) {
             const container = document.getElementById('prayer-times-list');
@@ -595,13 +619,6 @@
                         "Maghrib": timings.Maghrib,
                         "Isha": timings.Isha
                     };
-
-                    if (result.data.date && result.data.date.hijri) {
-                        const h = result.data.date.hijri;
-                        hijriDate = `${h.day} ${h.month.en} ${h.year}`;
-                        const hijriEl = document.getElementById('hijri-date');
-                        if (hijriEl) hijriEl.textContent = hijriDate;
-                    }
 
                     if (locationLabel) {
                         locationLabel.innerHTML = `
@@ -690,7 +707,7 @@
         // Events gallery: looks for picture-one.jpg through picture-five.jpg (or .png/.jpeg/.webp)
         // in the same folder. Any image that exists is shown at its natural aspect ratio —
         // portrait posters stay portrait, landscape stays landscape, square stays square.
-        const eventSlotNames = ['picture-one', 'picture-two', 'picture-three', 'picture-four', 'picture-five'];
+        const eventSlotNames = ['picture1', 'picture2', 'picture3', 'picture4', 'picture5'];
         const eventExtensions = ['jpg', 'jpeg', 'png', 'webp'];
 
         function tryLoadImage(basename) {
@@ -710,7 +727,7 @@
 
         async function loadEventsGallery() {
             const gallery = document.getElementById('events-gallery');
-            const emptyHint = document.getElementById('events-empty-hint');
+            const section = document.getElementById('events-section');
             if (!gallery) return;
 
             const found = await Promise.all(eventSlotNames.map(tryLoadImage));
@@ -718,10 +735,10 @@
 
             if (slots.length === 0) {
                 gallery.innerHTML = '';
-                if (emptyHint) emptyHint.style.display = 'block';
+                if (section) section.style.display = 'none';
                 return;
             }
-            if (emptyHint) emptyHint.style.display = 'none';
+            if (section) section.style.display = '';
 
             gallery.innerHTML = slots.map((src, idx) => `
                 <div class="event-card fade-in-up rounded-2xl overflow-hidden cursor-zoom-in" style="animation-delay:${idx * 80}ms" onclick="openLightbox('${src}')">
@@ -773,14 +790,22 @@
             return { name: nextPrayerName, date: nextPrayerDate };
         }
 
+        // A prayer only shows as "Now" for 45 minutes after its start time,
+        // then the highlight clears until the next prayer begins.
+        const CURRENT_PRAYER_WINDOW_MS = 45 * 60 * 1000;
+
         function getCurrentPrayerName() {
             const order = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
             const now = new Date();
             let current = null;
+            let currentTime = null;
             for (const name of order) {
                 if (!prayerTimesData[name]) continue;
                 const t = parseTimeToDate(prayerTimesData[name]);
-                if (t <= now) current = name;
+                if (t <= now) { current = name; currentTime = t; }
+            }
+            if (current && currentTime && (now - currentTime) > CURRENT_PRAYER_WINDOW_MS) {
+                return null;
             }
             return current;
         }
@@ -910,6 +935,7 @@
         // Main initialization
         async function initializeWebsite() {
             updateCurrentDate();
+            updateHijriDate();
             setupLogoClick();
             updateMadhabButton();
             setupScrollReveal();
@@ -950,6 +976,8 @@
 
             setInterval(updateCountdown, 1000);
             setInterval(() => { renderPrayerTimesList(); calculateNextPrayer(); }, 60000);
+            setInterval(updateCurrentDate, 60 * 60 * 1000);
+            setInterval(updateHijriDate, 60 * 60 * 1000);
 
             document.addEventListener('keydown', function(e) {
                 if (e.key === "Escape") {
