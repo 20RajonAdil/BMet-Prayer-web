@@ -1,0 +1,2676 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quran Maar • Light · Time · Guidance</title>
+
+<!-- ============ TECHNICAL SEO ============ -->
+<meta name="description" content="Quran Maar — read the Qur'an with translations and audio, track prayer times, explore Hadith collections, follow the Hijri calendar, and view a real-time Islamic moon phase. 100% private: everything is saved only on your device.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="Quran Maar">
+<meta name="theme-color" content="#0a1120">
+<link rel="canonical" href="https://20rajonadil.github.io/MAAR.Quran/">
+
+<!-- Open Graph / Facebook, WhatsApp, etc. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quran Maar">
+<meta property="og:title" content="Quran Maar • Light · Time · Guidance">
+<meta property="og:description" content="Read the Qur'an with translations and audio, track prayer times, explore Hadith, follow the Hijri calendar, and view a real-time Islamic moon phase — 100% private.">
+<meta property="og:url" content="https://20rajonadil.github.io/MAAR.Quran/">
+<meta property="og:image" content="https://20rajonadil.github.io/MAAR.Quran/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Quran Maar — Light, Time, Guidance">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter / X Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Quran Maar • Light · Time · Guidance">
+<meta name="twitter:description" content="Read the Qur'an with translations and audio, track prayer times, explore Hadith, follow the Hijri calendar, and view a real-time Islamic moon phase — 100% private.">
+<meta name="twitter:image" content="https://20rajonadil.github.io/MAAR.Quran/og-image.png">
+<meta name="twitter:image:alt" content="Quran Maar — Light, Time, Guidance">
+
+<!-- Icons & PWA manifest -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%2322d3ee%22/></svg>">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+
+<!-- Structured data (JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://20rajonadil.github.io/MAAR.Quran/#website",
+      "url": "https://20rajonadil.github.io/MAAR.Quran/",
+      "name": "Quran Maar",
+      "description": "Read the Qur'an with translations and audio, track prayer times, explore Hadith collections, follow the Hijri calendar, and view a real-time Islamic moon phase.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://20rajonadil.github.io/MAAR.Quran/#webapp",
+      "name": "Quran Maar",
+      "url": "https://20rajonadil.github.io/MAAR.Quran/",
+      "description": "A free, private Islamic companion app: read the Qur'an with translations and audio, track daily prayer times, explore Hadith collections, follow the Hijri calendar, and view a real-time moon phase. All data stays on your device.",
+      "applicationCategory": "LifestyleApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "inLanguage": "en"
+    }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Lateef:wght@400;700&family=Reem+Kufi:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Harmattan:wght@400;700&family=Markazi+Text:wght@400;500;600;700&family=Cairo:wght@400;600;700&family=Rakkas&display=swap" rel="stylesheet">
+
+<!-- Sun & moon position engine, inlined directly (v1.9.0, MIT/BSD licensed,
+     (c) Vladimir Agafonkin) so there is no external CDN to fail to load. -->
+<script>
+/*
+ (c) 2011-2015, Vladimir Agafonkin
+ SunCalc is a JavaScript library for calculating sun/moon position and light phases.
+ https://github.com/mourner/suncalc
+*/
+
+(function () { 'use strict';
+
+// shortcuts for easier to read formulas
+
+var PI   = Math.PI,
+    sin  = Math.sin,
+    cos  = Math.cos,
+    tan  = Math.tan,
+    asin = Math.asin,
+    atan = Math.atan2,
+    acos = Math.acos,
+    rad  = PI / 180;
+
+// sun calculations are based on http://aa.quae.nl/en/reken/zonpositie.html formulas
+
+
+// date/time constants and conversions
+
+var dayMs = 1000 * 60 * 60 * 24,
+    J1970 = 2440588,
+    J2000 = 2451545;
+
+function toJulian(date) { return date.valueOf() / dayMs - 0.5 + J1970; }
+function fromJulian(j)  { return new Date((j + 0.5 - J1970) * dayMs); }
+function toDays(date)   { return toJulian(date) - J2000; }
+
+
+// general calculations for position
+
+var e = rad * 23.4397; // obliquity of the Earth
+
+function rightAscension(l, b) { return atan(sin(l) * cos(e) - tan(b) * sin(e), cos(l)); }
+function declination(l, b)    { return asin(sin(b) * cos(e) + cos(b) * sin(e) * sin(l)); }
+
+function azimuth(H, phi, dec)  { return atan(sin(H), cos(H) * sin(phi) - tan(dec) * cos(phi)); }
+function altitude(H, phi, dec) { return asin(sin(phi) * sin(dec) + cos(phi) * cos(dec) * cos(H)); }
+
+function siderealTime(d, lw) { return rad * (280.16 + 360.9856235 * d) - lw; }
+
+function astroRefraction(h) {
+    if (h < 0) // the following formula works for positive altitudes only.
+        h = 0; // if h = -0.08901179 a div/0 would occur.
+
+    // formula 16.4 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
+    // 1.02 / tan(h + 10.26 / (h + 5.10)) h in degrees, result in arc minutes -> converted to rad:
+    return 0.0002967 / Math.tan(h + 0.00312536 / (h + 0.08901179));
+}
+
+// general sun calculations
+
+function solarMeanAnomaly(d) { return rad * (357.5291 + 0.98560028 * d); }
+
+function eclipticLongitude(M) {
+
+    var C = rad * (1.9148 * sin(M) + 0.02 * sin(2 * M) + 0.0003 * sin(3 * M)), // equation of center
+        P = rad * 102.9372; // perihelion of the Earth
+
+    return M + C + P + PI;
+}
+
+function sunCoords(d) {
+
+    var M = solarMeanAnomaly(d),
+        L = eclipticLongitude(M);
+
+    return {
+        dec: declination(L, 0),
+        ra: rightAscension(L, 0)
+    };
+}
+
+
+var SunCalc = {};
+
+
+// calculates sun position for a given date and latitude/longitude
+
+SunCalc.getPosition = function (date, lat, lng) {
+
+    var lw  = rad * -lng,
+        phi = rad * lat,
+        d   = toDays(date),
+
+        c  = sunCoords(d),
+        H  = siderealTime(d, lw) - c.ra;
+
+    return {
+        azimuth: azimuth(H, phi, c.dec),
+        altitude: altitude(H, phi, c.dec)
+    };
+};
+
+
+// sun times configuration (angle, morning name, evening name)
+
+var times = SunCalc.times = [
+    [-0.833, 'sunrise',       'sunset'      ],
+    [  -0.3, 'sunriseEnd',    'sunsetStart' ],
+    [    -6, 'dawn',          'dusk'        ],
+    [   -12, 'nauticalDawn',  'nauticalDusk'],
+    [   -18, 'nightEnd',      'night'       ],
+    [     6, 'goldenHourEnd', 'goldenHour'  ]
+];
+
+// adds a custom time to the times config
+
+SunCalc.addTime = function (angle, riseName, setName) {
+    times.push([angle, riseName, setName]);
+};
+
+
+// calculations for sun times
+
+var J0 = 0.0009;
+
+function julianCycle(d, lw) { return Math.round(d - J0 - lw / (2 * PI)); }
+
+function approxTransit(Ht, lw, n) { return J0 + (Ht + lw) / (2 * PI) + n; }
+function solarTransitJ(ds, M, L)  { return J2000 + ds + 0.0053 * sin(M) - 0.0069 * sin(2 * L); }
+
+function hourAngle(h, phi, d) { return acos((sin(h) - sin(phi) * sin(d)) / (cos(phi) * cos(d))); }
+function observerAngle(height) { return -2.076 * Math.sqrt(height) / 60; }
+
+// returns set time for the given sun altitude
+function getSetJ(h, lw, phi, dec, n, M, L) {
+
+    var w = hourAngle(h, phi, dec),
+        a = approxTransit(w, lw, n);
+    return solarTransitJ(a, M, L);
+}
+
+
+// calculates sun times for a given date, latitude/longitude, and, optionally,
+// the observer height (in meters) relative to the horizon
+
+SunCalc.getTimes = function (date, lat, lng, height) {
+
+    height = height || 0;
+
+    var lw = rad * -lng,
+        phi = rad * lat,
+
+        dh = observerAngle(height),
+
+        d = toDays(date),
+        n = julianCycle(d, lw),
+        ds = approxTransit(0, lw, n),
+
+        M = solarMeanAnomaly(ds),
+        L = eclipticLongitude(M),
+        dec = declination(L, 0),
+
+        Jnoon = solarTransitJ(ds, M, L),
+
+        i, len, time, h0, Jset, Jrise;
+
+
+    var result = {
+        solarNoon: fromJulian(Jnoon),
+        nadir: fromJulian(Jnoon - 0.5)
+    };
+
+    for (i = 0, len = times.length; i < len; i += 1) {
+        time = times[i];
+        h0 = (time[0] + dh) * rad;
+
+        Jset = getSetJ(h0, lw, phi, dec, n, M, L);
+        Jrise = Jnoon - (Jset - Jnoon);
+
+        result[time[1]] = fromJulian(Jrise);
+        result[time[2]] = fromJulian(Jset);
+    }
+
+    return result;
+};
+
+
+// moon calculations, based on http://aa.quae.nl/en/reken/hemelpositie.html formulas
+
+function moonCoords(d) { // geocentric ecliptic coordinates of the moon
+
+    var L = rad * (218.316 + 13.176396 * d), // ecliptic longitude
+        M = rad * (134.963 + 13.064993 * d), // mean anomaly
+        F = rad * (93.272 + 13.229350 * d),  // mean distance
+
+        l  = L + rad * 6.289 * sin(M), // longitude
+        b  = rad * 5.128 * sin(F),     // latitude
+        dt = 385001 - 20905 * cos(M);  // distance to the moon in km
+
+    return {
+        ra: rightAscension(l, b),
+        dec: declination(l, b),
+        dist: dt
+    };
+}
+
+SunCalc.getMoonPosition = function (date, lat, lng) {
+
+    var lw  = rad * -lng,
+        phi = rad * lat,
+        d   = toDays(date),
+
+        c = moonCoords(d),
+        H = siderealTime(d, lw) - c.ra,
+        h = altitude(H, phi, c.dec),
+        // formula 14.1 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
+        pa = atan(sin(H), tan(phi) * cos(c.dec) - sin(c.dec) * cos(H));
+
+    h = h + astroRefraction(h); // altitude correction for refraction
+
+    return {
+        azimuth: azimuth(H, phi, c.dec),
+        altitude: h,
+        distance: c.dist,
+        parallacticAngle: pa
+    };
+};
+
+
+// calculations for illumination parameters of the moon,
+// based on http://idlastro.gsfc.nasa.gov/ftp/pro/astro/mphase.pro formulas and
+// Chapter 48 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
+
+SunCalc.getMoonIllumination = function (date) {
+
+    var d = toDays(date || new Date()),
+        s = sunCoords(d),
+        m = moonCoords(d),
+
+        sdist = 149598000, // distance from Earth to Sun in km
+
+        phi = acos(sin(s.dec) * sin(m.dec) + cos(s.dec) * cos(m.dec) * cos(s.ra - m.ra)),
+        inc = atan(sdist * sin(phi), m.dist - sdist * cos(phi)),
+        angle = atan(cos(s.dec) * sin(s.ra - m.ra), sin(s.dec) * cos(m.dec) -
+                cos(s.dec) * sin(m.dec) * cos(s.ra - m.ra));
+
+    return {
+        fraction: (1 + cos(inc)) / 2,
+        phase: 0.5 + 0.5 * inc * (angle < 0 ? -1 : 1) / Math.PI,
+        angle: angle
+    };
+};
+
+
+function hoursLater(date, h) {
+    return new Date(date.valueOf() + h * dayMs / 24);
+}
+
+// calculations for moon rise/set times are based on http://www.stargazing.net/kepler/moonrise.html article
+
+SunCalc.getMoonTimes = function (date, lat, lng, inUTC) {
+    var t = new Date(date);
+    if (inUTC) t.setUTCHours(0, 0, 0, 0);
+    else t.setHours(0, 0, 0, 0);
+
+    var hc = 0.133 * rad,
+        h0 = SunCalc.getMoonPosition(t, lat, lng).altitude - hc,
+        h1, h2, rise, set, a, b, xe, ye, d, roots, x1, x2, dx;
+
+    // go in 2-hour chunks, each time seeing if a 3-point quadratic curve crosses zero (which means rise or set)
+    for (var i = 1; i <= 24; i += 2) {
+        h1 = SunCalc.getMoonPosition(hoursLater(t, i), lat, lng).altitude - hc;
+        h2 = SunCalc.getMoonPosition(hoursLater(t, i + 1), lat, lng).altitude - hc;
+
+        a = (h0 + h2) / 2 - h1;
+        b = (h2 - h0) / 2;
+        xe = -b / (2 * a);
+        ye = (a * xe + b) * xe + h1;
+        d = b * b - 4 * a * h1;
+        roots = 0;
+
+        if (d >= 0) {
+            dx = Math.sqrt(d) / (Math.abs(a) * 2);
+            x1 = xe - dx;
+            x2 = xe + dx;
+            if (Math.abs(x1) <= 1) roots++;
+            if (Math.abs(x2) <= 1) roots++;
+            if (x1 < -1) x1 = x2;
+        }
+
+        if (roots === 1) {
+            if (h0 < 0) rise = i + x1;
+            else set = i + x1;
+
+        } else if (roots === 2) {
+            rise = i + (ye < 0 ? x2 : x1);
+            set = i + (ye < 0 ? x1 : x2);
+        }
+
+        if (rise && set) break;
+
+        h0 = h2;
+    }
+
+    var result = {};
+
+    if (rise) result.rise = hoursLater(t, rise);
+    if (set) result.set = hoursLater(t, set);
+
+    if (!rise && !set) result[ye > 0 ? 'alwaysUp' : 'alwaysDown'] = true;
+
+    return result;
+};
+
+
+// export as Node module / AMD module / browser variable
+if (typeof window !== 'undefined') window.SunCalc = SunCalc; // always expose it on window when one exists
+if (typeof exports === 'object' && typeof module !== 'undefined') module.exports = SunCalc;
+else if (typeof define === 'function' && define.amd) define(SunCalc);
+
+}());
+
+</script>
+
+<style>
+:root{
+  --bg-deep:#05080f;
+  --bg-1:#0a1120;
+  --bg-2:#0d1a2b;
+  --panel:rgba(16,28,46,.55);
+  --panel-border:rgba(255,255,255,.08);
+  --accent:#22d3ee;
+  --accent2:#34d399;
+  --gold:#fbbf24;
+  --text:#eaf2fb;
+  --muted:#8ea0b8;
+  --radius:18px;
+  --shadow-deep:0 30px 60px -20px rgba(0,0,0,.7);
+  --arabic-font:'Noto Naskh Arabic','Amiri',serif;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;min-height:100vh;
+  font-family:'Outfit',system-ui,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(34,211,238,.10), transparent),
+    radial-gradient(ellipse 60% 40% at 85% 10%, rgba(52,211,153,.08), transparent),
+    linear-gradient(180deg,var(--bg-deep),var(--bg-1) 35%,var(--bg-2));
+  background-attachment:fixed;
+  position:relative;
+  overflow-x:hidden;
+}
+
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.7;}
+
+h1,h2,h3{font-family:'Cormorant Garamond',serif;letter-spacing:.01em;margin:0;}
+.eyebrow{font-family:'Outfit';font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;}
+
+header{position:sticky;top:0;z-index:30;backdrop-filter:blur(16px);background:rgba(5,8,15,.55);border-bottom:1px solid rgba(255,255,255,.06);}
+.nav{display:flex;align-items:center;padding:12px 22px;gap:18px;max-width:1280px;margin:0 auto;}
+
+.logo-wrap{display:flex;gap:12px;align-items:center;user-select:none;}
+.logo-mark{
+  position:relative;width:46px;height:46px;border-radius:14px;flex:0 0 auto;
+  background:linear-gradient(145deg,#0c1726,#0a121f);
+  border:1px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 -8px 14px rgba(0,0,0,.45),
+    0 10px 22px -8px rgba(34,211,238,.35);
+}
+.logo-mark img{width:100%;height:100%;object-fit:cover;}
+.logo-mark svg{width:68%;height:68%;}
+.logo-text{display:flex;flex-direction:column;line-height:1.05;}
+.logo-text b{font-family:'Cormorant Garamond';font-size:22px;font-weight:700;background:linear-gradient(90deg,#fff,var(--accent) 70%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.logo-text span{font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;}
+.app-version{
+  font-size:10px;color:var(--muted);opacity:.6;align-self:flex-end;
+  margin-bottom:2px;font-variant-numeric:tabular-nums;
+}
+
+.tabs{display:flex;gap:6px;margin-left:auto;align-items:center;}
+.tab{padding:9px 16px;border-radius:999px;cursor:pointer;color:var(--muted);font-size:14px;font-weight:500;transition:.25s;position:relative;}
+.tab:hover{color:var(--text);}
+.tab.active{background:rgba(255,255,255,.06);color:var(--accent);font-weight:600;}
+.tab.active::after{content:'';position:absolute;left:18px;right:18px;bottom:3px;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;}
+
+/* === LOCAL STORE UI (folder-based vault, replaces Google login) === */
+#authArea { display: flex; align-items: center; margin-left: 12px; }
+
+.localstore-menu { position: relative; display: flex; align-items: center; }
+
+.localstore-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+}
+.localstore-btn:hover {
+  background: rgba(255,255,255,.1);
+  border-color: var(--accent);
+}
+.localstore-btn .dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--muted);
+  box-shadow:0 0 0 rgba(52,211,153,0);
+}
+.localstore-btn .dot.linked{ background:var(--accent2); box-shadow:0 0 8px var(--accent2); }
+.localstore-btn .dot.warn{ background:var(--gold); box-shadow:0 0 8px var(--gold); }
+
+/* Dropdown panel */
+.localstore-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 340px;
+  max-width: 92vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #0a1120;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px -15px rgba(0,0,0,.6);
+  padding: 8px;
+  z-index: 200;
+  display: none;
+}
+.localstore-dropdown.show {
+  display: block;
+  animation: dropdownPop 0.2s ease forwards;
+}
+@keyframes dropdownPop {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.localstore-header {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.localstore-header strong { display:block; font-size:14px; color:var(--text); }
+.localstore-header small { color:var(--muted); font-size:12px; display:block; margin-top:4px; line-height:1.5; }
+
+.ls-status{ padding:10px 16px; border-bottom:1px solid rgba(255,255,255,.08); }
+.ls-status-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:5px 0; font-size:12.5px; }
+.ls-status-label{ color:var(--muted); display:flex; align-items:center; gap:6px; }
+.ls-status-value{ color:var(--text); font-weight:600; text-align:right; }
+.ls-dot{ width:7px; height:7px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+.ls-dot.is-ok{ background:var(--accent2); box-shadow:0 0 6px var(--accent2); }
+.ls-dot.is-warn{ background:var(--gold); box-shadow:0 0 6px var(--gold); }
+.ls-dot.is-off{ background:var(--muted); }
+
+.ls-btn-row{ display:flex; flex-wrap:wrap; gap:6px; padding:10px 12px; }
+.ls-btn{
+  flex:1 1 auto; white-space:nowrap;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
+  color:var(--text); font-size:12px; font-weight:600; padding:8px 10px;
+  border-radius:9px; cursor:pointer; transition:.2s;
+}
+.ls-btn:hover{ background:rgba(255,255,255,.09); border-color:var(--accent); }
+.ls-btn.ls-btn-primary{ background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#052014; border-color:transparent; }
+.ls-btn.ls-btn-primary:hover{ filter:brightness(1.08); }
+
+.ls-backups{ padding:6px 12px 12px; }
+.ls-backups-title{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:6px 4px 8px; }
+.ls-backup-item{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:8px 10px; border-radius:9px; font-size:12px; color:var(--text);
+}
+.ls-backup-item:hover{ background:rgba(255,255,255,.05); }
+.ls-backup-item span{ opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ls-backup-item button{
+  flex-shrink:0; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);
+  color:var(--text); font-size:11px; font-weight:600; padding:5px 10px; border-radius:7px; cursor:pointer;
+}
+.ls-backup-item button:hover{ border-color:var(--accent); }
+.ls-backup-empty{ font-size:12px; color:var(--muted); padding:4px 10px 8px; line-height:1.6; }
+
+.ls-toast{
+  margin:8px 12px 4px; padding:8px 12px; border-radius:9px; font-size:12px; line-height:1.5;
+  background:rgba(52,211,153,.1); border:1px solid rgba(52,211,153,.3); color:var(--text);
+}
+.ls-toast.ls-toast-warn{ background:rgba(251,191,36,.1); border-color:rgba(251,191,36,.35); }
+
+/* Arabic font selector */
+.font-preview{font-size:20px;padding:6px 4px;color:var(--text);}
+
+/* Death counter */
+.death-counter-wrap{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:22px 10px;margin-top:14px;border-radius:14px;text-align:center;
+  background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
+  border:1px solid rgba(255,255,255,.06);
+}
+.death-counter-num{
+  font-family:'Outfit';font-size:clamp(28px,5vw,44px);font-weight:800;font-variant-numeric:tabular-nums;
+  background:linear-gradient(90deg,#fff,var(--gold) 70%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  letter-spacing:.02em;
+}
+.death-counter-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:6px;}
+.death-counter-note{font-size:12px;color:var(--muted);margin-top:10px;max-width:520px;line-height:1.6;}
+.death-counter-note b{color:var(--text);}
+
+/* Mobile adjustments */
+@media(max-width:768px){
+  .clock-row{grid-template-columns:repeat(2,1fr);}
+  .moon-readout{position:static;margin-top:10px;}
+  .moon-compass-mini{position:static;margin:10px auto 0;}
+  .moon-stage{height:auto;min-height:260px;padding-bottom:20px;}
+  .tabs{flex-wrap:wrap;}
+  
+  .localstore-btn {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .localstore-dropdown {
+    width: 92vw;
+    max-width: 94vw;
+    right: -8px;
+  }
+}
+
+main{padding:28px 20px 60px;max-width:1280px;margin:auto;position:relative;z-index:1;}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  border-radius:var(--radius);
+  padding:22px;margin-bottom:20px;
+  backdrop-filter:blur(14px);
+  box-shadow:var(--shadow-deep), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.page{display:none;animation:fadeUp .5s cubic-bezier(.2,.8,.2,1);}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+.small{color:var(--muted);font-size:13px;}
+button,select,input{background:rgba(255,255,255,.04);color:var(--text);border:1px solid rgba(255,255,255,.1);padding:9px 12px;border-radius:10px;font-family:inherit;font-size:14px;}
+select{cursor:pointer;}
+button.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#031018;border:none;font-weight:700;cursor:pointer;box-shadow:0 8px 20px -8px rgba(34,211,238,.5);}
+button.primary:hover{filter:brightness(1.08);}
+button.ghost{cursor:pointer;}
+button.ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+/* Prayer ticker */
+.ticker-shell{overflow:hidden;margin-top:10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18);padding:10px 0;}
+#prayerTicker{display:flex;white-space:nowrap;animation:scrollTicker 26s linear infinite;width:max-content;}
+#prayerTicker div{display:inline-flex;align-items:center;gap:6px;padding:0 26px;font-size:14px;color:var(--muted);border-right:1px solid rgba(255,255,255,.08);}
+.highlight{color:var(--gold);font-weight:700;text-shadow:0 0 10px rgba(251,191,36,.6);}
+.moon-direction-callout{
+  margin-top:14px;padding:10px 14px;border-radius:12px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  text-align:center;font-size:13.5px;line-height:1.5;color:var(--muted);
+}
+.moon-direction-callout a{color:var(--accent2,#22d3ee);text-decoration:underline;}
+@keyframes scrollTicker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+.clock-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px;}
+.clock-box{
+  padding:14px 10px;border-radius:14px;text-align:center;
+  background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.01));
+  border:1px solid rgba(255,255,255,.06);
+}
+.clock-box div:first-child{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;}
+.clock-box .arabic-num{font-family:'Amiri',serif;direction:rtl;}
+
+/* 3D Moon */
+.moon-stage{
+  position:relative;height:280px;margin-top:26px;border-radius:20px;overflow:hidden;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 100%, rgba(34,211,238,.07), transparent 70%),
+    linear-gradient(180deg,#040810,#070d1a 60%,#050a14);
+  border:1px solid rgba(255,255,255,.06);
+}
+.starfield-local{position:absolute;inset:0;}
+.starfield-local i{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.6;animation:twinkle 3.5s ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.9}}
+
+.moon-orbit{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+@keyframes moonFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+/* Real-time moon phase (exact geometry, drawn on a 2D canvas, fully client-side) */
+.moon-phase-container{
+  width:min(78%,240px);aspect-ratio:1/1;position:relative;
+  animation:moonFloat 7s ease-in-out infinite;
+  transition:filter .6s ease, transform .8s ease;
+}
+.moon-phase-container canvas{
+  width:100%;height:100%;display:block;
+  filter:drop-shadow(0 10px 26px rgba(0,0,0,.55));
+}
+.moon-glow-ring{
+  position:absolute;inset:2%;border-radius:50%;z-index:-1;
+  background:radial-gradient(circle, rgba(140,170,255,.16), transparent 70%);
+  pointer-events:none;
+  transition:opacity .8s ease;
+}
+
+.moon-readout{
+  position:absolute;left:18px;bottom:14px;font-size:12.5px;color:var(--muted);line-height:1.7;
+}
+.moon-readout b{color:var(--text);font-weight:600;}
+.moon-compass-mini{position:absolute;right:18px;bottom:14px;width:88px;height:88px;}
+
+.sky{position:relative;height:90px;margin-top:8px;border-top:1px dashed rgba(255,255,255,.12);}
+.sun-dot{position:absolute;width:16px;height:16px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #fff8d9, var(--gold) 60%, #b8860b);
+  box-shadow:0 0 18px var(--gold), 0 0 36px rgba(251,191,36,.5);
+  transition:left .6s ease,bottom .6s ease;}
+
+#moonCompass{position:relative;width:100%;height:100%;border:1px solid rgba(255,255,255,.18);border-radius:50%;background:rgba(255,255,255,.02);}
+#moonCompass span{position:absolute;font-size:8px;color:var(--muted);}
+#compassArrow{position:absolute;top:50%;left:50%;width:2px;height:34px;background:linear-gradient(180deg,var(--accent2),transparent);transform-origin:bottom center;transform:rotate(0deg);border-radius:2px;box-shadow:0 0 8px var(--accent2);transition:transform 1s ease;}
+
+/* Quran reader */
+.quran-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+.quran-toolbar .grow{flex:1;min-width:160px;}
+.surah-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;
+  max-height:420px;overflow-y:auto;padding-right:4px;
+}
+.resume-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:14px 18px;border-radius:14px;margin-bottom:14px;cursor:pointer;
+  background:linear-gradient(135deg,rgba(34,211,238,.10),rgba(52,211,153,.06));
+  border:1px solid rgba(34,211,238,.25);transition:.2s;
+}
+.resume-banner:hover{border-color:var(--accent);}
+.resume-banner b{color:var(--accent);}
+.surah-card{
+  padding:12px;border-radius:12px;cursor:pointer;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  transition:.2s;
+}
+.surah-card:hover{background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.3);transform:translateY(-1px);}
+.surah-card .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.06);font-size:11px;color:var(--accent);margin-right:6px;}
+.surah-card .ar{font-family:'Amiri',serif;float:right;color:var(--text);font-size:16px;}
+.surah-card .en{font-size:13px;font-weight:600;margin-top:4px;}
+.surah-card .meta{font-size:11px;color:var(--muted);margin-top:2px;}
+
+.reader{margin-top:18px;}
+.reader-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:14px;margin-bottom:14px;}
+.ayah{padding:18px 4px;border-bottom:1px solid rgba(255,255,255,.05);}
+.ayah .ar{font-family:var(--arabic-font);font-size:27px;line-height:2.1;text-align:right;direction:rtl;color:#f5f8fc;}
+.ayah .tr{margin-top:10px;font-size:15px;color:var(--muted);line-height:1.6;}
+.ayah .num-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:rgba(34,211,238,.12);color:var(--accent);font-size:11px;margin-bottom:8px;}
+.ayah-actions{display:inline-flex;gap:6px;float:left;}
+.ayah-actions button{
+  width:30px;height:30px;padding:0;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
+  font-size:13px;cursor:pointer;background:rgba(255,255,255,.03);
+}
+.ayah-actions button:hover{border-color:var(--accent);color:var(--accent);}
+.ayah-actions button.active{background:rgba(34,211,238,.16);color:var(--accent);border-color:rgba(34,211,238,.4);}
+.ayah.is-playing{background:rgba(34,211,238,.05);border-radius:12px;}
+.ayah.is-bookmarked{box-shadow:inset 3px 0 0 var(--gold);}
+.reader-controls{display:flex;gap:8px;align-items:center;}
+.bookmark-card{
+  padding:14px 16px;border-radius:14px;margin-bottom:10px;cursor:pointer;
+  background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
+  border:1px solid rgba(255,255,255,.07);
+  transition:.2s;display:flex;flex-direction:column;gap:6px;
+}
+.bookmark-card:hover{border-color:var(--gold);background:rgba(251,191,36,.06);}
+.bookmark-card .bm-meta{display:flex;justify-content:space-between;align-items:center;}
+.bookmark-card .bm-label{font-size:13px;font-weight:600;color:var(--gold);}
+.bookmark-card .bm-delete{color:var(--muted);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:6px;border:none;background:transparent;}
+.bookmark-card .bm-delete:hover{color:#ef4444;background:rgba(239,68,68,.1);}
+.bookmark-card .bm-arabic{font-family:var(--arabic-font);font-size:20px;text-align:right;direction:rtl;color:#f5f8fc;line-height:1.8;}
+.bookmark-card .bm-text{font-size:13px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.bm-empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.bm-empty .bm-empty-icon{font-size:36px;margin-bottom:10px;}
+.bismillah-banner{
+  text-align:center;padding:22px 10px 26px;margin-bottom:6px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.bismillah-banner .ar{
+  font-family:'Amiri',serif;font-size:30px;color:var(--gold);
+  text-shadow:0 0 18px rgba(251,191,36,.25);
+}
+.bismillah-banner .tr{
+  margin-top:10px;font-size:13px;color:var(--muted);font-style:italic;letter-spacing:.02em;
+}
+.reader-loading{text-align:center;padding:40px;color:var(--muted);}
+
+/* About */
+.about-panel{display:flex;flex-wrap:wrap;justify-content:center;gap:24px;}
+.profile-card{
+  width:300px;max-width:100%;
+  background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:20px;padding:22px;text-align:center;
+  box-shadow:0 20px 40px -16px rgba(0,0,0,.5);
+}
+.profile-image{width:140px;height:140px;margin:0 auto;border-radius:50%;overflow:hidden;border:2px solid transparent;background:linear-gradient(var(--bg-1),var(--bg-1)) padding-box,linear-gradient(135deg,var(--accent),var(--accent2)) border-box;}
+.profile-image img{width:100%;height:100%;object-fit:cover;display:block;}
+.profile-info{margin-top:14px;}
+.profile-info h3{font-size:20px;font-weight:700;}
+.profile-info p{font-size:13.5px;color:var(--muted);margin-top:8px;line-height:1.6;}
+
+@media(max-width:768px){
+  .clock-row{grid-template-columns:repeat(2,1fr);}
+  .moon-readout{position:static;margin-top:10px;}
+  .moon-compass-mini{position:static;margin:10px auto 0;}
+  .moon-stage{height:auto;min-height:260px;padding-bottom:20px;}
+  .tabs{flex-wrap:wrap;}
+}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<header>
+  <div class="nav">
+    <div class="logo-wrap">
+      <div class="logo-mark" id="logoMark">
+        <img src="logo.png" alt="Quran Maar logo" id="logoImg"
+             onerror="this.style.display='none'; document.getElementById('defaultLogoSvg').style.display='block';">
+        <svg viewBox="0 0 100 100" id="defaultLogoSvg" style="display:none;">
+          <defs>
+            <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#22d3ee"/>
+              <stop offset="100%" stop-color="#34d399"/>
+            </linearGradient>
+          </defs>
+          <path d="M62 12a38 38 0 1 0 26 26 30 30 0 0 1-26-26z" fill="url(#lg1)"/>
+          <circle cx="74" cy="22" r="5" fill="#fbbf24"/>
+        </svg>
+      </div>
+      <div class="logo-text"><b>Quran Maar</b><span>Light · Time · Guidance</span></div>
+      <span class="app-version" title="App version">v1.1.1</span>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-tab="home">Home</div>
+      <div class="tab" data-tab="quran">Qur'an</div>
+      <div class="tab" data-tab="hadith">Hadith</div>
+      <div class="tab" data-tab="about">About</div>
+    </div>
+
+    <!-- LOCAL STORE (Quran-MAAR) — replaces the old Google login -->
+    <div id="authArea"></div>
+  </div>
+</header>
+
+<main>
+  <!-- HOME -->
+  <section id="home" class="page active">
+    <div class="panel">
+      <div class="eyebrow">Today</div>
+      <h2 style="font-size:22px;margin-top:4px;">Prayer Times</h2>
+      <div class="ticker-shell"><div id="prayerTicker">Loading prayer times…</div></div>
+      <div id="countdown" class="small" style="margin-top:8px">Next prayer: --:--:--</div>
+
+      <div class="clock-row">
+        <div class="clock-box"><div id="englishTime">00:00:00</div><div class="small">English Time</div></div>
+        <div class="clock-box"><div id="arabicTime" class="arabic-num">٠٠:٠٠:٠٠</div><div class="small">Arabic Time</div></div>
+        <div class="clock-box"><div id="gregorian">--</div><div class="small">Gregorian</div></div>
+        <div class="clock-box"><div id="hijri">--</div><div class="small">Hijri</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="eyebrow">Tonight's Sky</div>
+      <h2 style="font-size:22px;margin-top:4px;">The Moon</h2>
+      <div class="moon-stage">
+        <div class="starfield-local" id="localStars"></div>
+        <div class="moon-orbit">
+          <div class="moon-glow-ring" id="moonGlowRing"></div>
+          <div class="moon-phase-container" id="moonPhaseWrap">
+            <canvas id="moonPhaseCanvas"></canvas>
+          </div>
+        </div>
+        <div class="moon-readout" id="moonInfo">Loading moon data…</div>
+        <div class="moon-compass-mini">
+          <div id="moonCompass"><div id="compassArrow"></div></div>
+        </div>
+      </div>
+      <div class="moon-direction-callout" id="moonDirectionText">Finding your location to work out which way to look…</div>
+      <div class="sky"><div class="sun-dot" id="sunDot"></div></div>
+      <div class="small" style="text-align:center;margin-top:6px;">Sun position across the sky</div>
+      <div class="small" style="text-align:center;margin-top:2px;opacity:.55;font-size:11px;">Phase shape computed live from real sun/moon position data</div>
+    </div>
+
+    <div class="panel">
+      <div class="eyebrow">Reflection</div>
+      <h2 style="font-size:22px;margin-top:4px;">The World Right Now</h2>
+      <div class="death-counter-wrap">
+        <div class="death-counter-num" id="deathCounter">0</div>
+        <div class="death-counter-label">Estimated deaths worldwide since you opened this page</div>
+        <div class="death-counter-note">
+          Every soul shall taste death. This is a live <b>estimate</b> only, based on published global average
+          mortality rates (~<span id="deathRatePerSec">—</span> deaths/second, roughly 60 million/year — WHO/UN
+          style figures), not a real-time feed of individual events. It's shown as a moment of reflection, not a
+          precise measurement.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QURAN -->
+  <section id="quran" class="page">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <div>
+          <div class="eyebrow">Read</div>
+          <h2 style="font-size:22px;margin-top:4px;">The Qur'an</h2>
+        </div>
+        <button class="ghost" id="bookmarksToggleBtn" style="display:flex;align-items:center;gap:6px;padding:9px 16px;">
+          <span>★</span> My Bookmarks <span id="bookmarkCount" style="background:rgba(251,191,36,.18);color:var(--gold);border-radius:999px;padding:1px 8px;font-size:12px;"></span>
+        </button>
+      </div>
+
+      <!-- BOOKMARKS PANEL -->
+      <div id="bookmarksPanel" style="display:none;">
+        <div style="border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px;padding-bottom:12px;display:flex;gap:10px;align-items:center;">
+          <button class="ghost active" id="bmTabQuran" style="padding:7px 14px;">📖 Qur'an</button>
+          <button class="ghost" id="bmTabHadith" style="padding:7px 14px;">📜 Hadith</button>
+          <button class="ghost" id="clearBookmarksBtn" style="margin-left:auto;color:var(--muted);font-size:12px;">Clear all</button>
+        </div>
+        <div id="bmQuranList"></div>
+        <div id="bmHadithList" style="display:none;"></div>
+      </div>
+
+      <div id="quranMainView">
+        <div class="quran-toolbar">
+          <div class="grow">
+            <input type="text" id="surahSearch" placeholder="Search a surah by name or number…" style="width:100%;">
+          </div>
+          <label class="small" for="langSelect">Translation language:</label>
+          <select id="langSelect"></select>
+          <label class="small" for="arabicFontSelect">Arabic script:</label>
+          <select id="arabicFontSelect"></select>
+        </div>
+
+        <div id="resumeBanner" style="display:none;"></div>
+
+        <div id="surahGrid" class="surah-grid">
+          <div class="small" style="padding:20px;">Loading surah list…</div>
+        </div>
+
+        <div class="reader" id="readerWrap" style="display:none;">
+          <div class="reader-head">
+            <div>
+              <div class="eyebrow" id="readerEyebrow">Surah</div>
+              <h2 id="readerTitle" style="font-size:24px;">—</h2>
+            </div>
+            <div class="reader-controls">
+              <button class="ghost" id="playSurahBtn" title="Play recitation from the start">▶ Play surah</button>
+              <button class="ghost" id="closeReader">← Back to list</button>
+            </div>
+          </div>
+          <div id="ayahList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HADITH -->
+  <section id="hadith" class="page">
+    <div class="panel">
+      <div class="eyebrow">Read</div>
+      <h2 style="font-size:22px;margin-top:4px;margin-bottom:14px;">Hadith Collections</h2>
+
+      <div class="quran-toolbar">
+        <div class="grow">
+          <label class="small" for="hadithCollectionSelect">Collection:</label>
+          <select id="hadithCollectionSelect" style="width:100%;"></select>
+        </div>
+        <label class="small" for="hadithLangSelect">Language:</label>
+        <select id="hadithLangSelect"></select>
+      </div>
+
+      <div class="quran-toolbar">
+        <div class="grow">
+          <input type="text" id="hadithJumpInput" placeholder="Jump to hadith number…" style="width:100%;">
+        </div>
+        <button class="primary" id="hadithJumpBtn">Go</button>
+      </div>
+
+      <div id="hadithCollectionInfo" class="small" style="margin-bottom:10px;"></div>
+
+      <div id="hadithList" class="reader">
+        <div class="reader-loading">Choose a collection to begin reading.</div>
+      </div>
+
+      <div id="hadithPager" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
+        <button class="ghost" id="hadithPrevBtn">← Previous</button>
+        <div class="small" id="hadithPageInfo"></div>
+        <button class="ghost" id="hadithNextBtn">Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="page">
+    <div class="panel about-panel">
+      <div class="profile-card">
+        <div class="profile-image"><img src="Quran.Maar.jpg" alt="Md Adil Ahmed Rajon" onerror="this.parentElement.style.background='linear-gradient(135deg,var(--accent),var(--accent2))'; this.remove();"></div>
+        <div class="profile-info">
+          <h3>Md Adil Ahmed Rajon</h3>
+          <p>I am Md Adil Ahmed Rajon. I created this modern Islamic learning platform to help you read the Qur'an in Arabic and many other languages, check accurate prayer times with live countdowns, and follow a Hijri calendar. I designed it for simplicity and clarity, so you can explore the Qur'an and Islamic practices in an interactive and respectful way.</p>
+          <p>To collaborate or work with me, you can call me at +44 07440445929 or email me at <a href="mailto:www.20rajona@gmail.com" style="color:var(--accent2);text-decoration:underline;">www.20rajona@gmail.com</a>.</p>
+          <p class="small">© 2026 Md Adil Ahmed Rajon</p>
+        </div>
+      </div>
+      <div class="profile-card">
+        <div class="profile-image"><img src="Quran.Maar2.jpg" alt="Adil Hasan" onerror="this.parentElement.style.background='linear-gradient(135deg,var(--accent2),var(--accent))'; this.remove();"></div>
+        <div class="profile-info">
+          <h3>Adil Hasan</h3>
+          <p>Hi! I'm Adil Hasan. I helped build this website by taking the pictures and media that were needed to make it complete. I'm glad I could contribute and help bring this project to life.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ================= STARFIELD ================= */
+(function(){
+  const c = document.getElementById('stars');
+  const ctx = c.getContext('2d');
+  let stars = [];
+  function resize(){
+    c.width = innerWidth; c.height = innerHeight;
+    stars = Array.from({length: Math.floor((innerWidth*innerHeight)/9000)}, ()=>({
+      x: Math.random()*c.width, y: Math.random()*c.height,
+      r: Math.random()*1.3+0.2, s: Math.random()*0.02+0.005, phase: Math.random()*Math.PI*2
+    }));
+  }
+  function draw(t){
+    ctx.clearRect(0,0,c.width,c.height);
+    for(const s of stars){
+      const a = 0.35 + 0.55*Math.abs(Math.sin(t*s.s + s.phase));
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.arc(s.x,s.y,s.r,0,7);
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  resize(); window.addEventListener('resize', resize);
+  requestAnimationFrame(draw);
+})();
+
+/* local twinkle stars */
+(function(){
+  const host = document.getElementById('localStars');
+  let html='';
+  for(let i=0;i<40;i++){
+    const x = Math.random()*100, y = Math.random()*100, d = (Math.random()*3+2).toFixed(2), delay=(Math.random()*3).toFixed(2);
+    html += `<i style="left:${x}%;top:${y}%;animation-duration:${d}s;animation-delay:${delay}s;"></i>`;
+  }
+  host.innerHTML = html;
+})();
+
+/* ================= STORAGE NAMESPACING ================= */
+const QM_NAMESPACE = (location.pathname.split('/').filter(Boolean)[0] || 'quran-maar') + '::';
+let memoryStorage = {};
+
+function qmStorageGet(key) {
+  try { return localStorage.getItem(QM_NAMESPACE + key); } 
+  catch (e) { return memoryStorage[QM_NAMESPACE + key] || null; }
+}
+function qmStorageSet(key, value) {
+  try { localStorage.setItem(QM_NAMESPACE + key, value); } 
+  catch (e) { memoryStorage[QM_NAMESPACE + key] = value; }
+  if (window.__qmSyncToFile) window.__qmSyncToFile();
+}
+
+/* ================= TABS ================= */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    openTab(t.dataset.tab);
+  };
+});
+function openTab(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ================= CLOCKS + HIJRI ================= */
+function two(n){return String(n).padStart(2,'0')}
+const arabicMap={'0':'٠','1':'١','2':'٢','3':'٣','4':'٤','5':'٥','6':'٦','7':'٧','8':'٨','9':'٩',':':':'};
+function toArabic(s){return String(s).split('').map(c=>arabicMap[c]||c).join('')}
+
+function updateClock(){
+  const now = new Date();
+  const eng = `${two(now.getHours())}:${two(now.getMinutes())}:${two(now.getSeconds())}`;
+  document.getElementById('englishTime').textContent = eng;
+  document.getElementById('arabicTime').textContent = toArabic(eng);
+  document.getElementById('gregorian').textContent = now.toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+}
+
+let hijriDateCache = null;
+async function updateHijriDate() {
+  const hijriEl = document.getElementById('hijri');
+  if (hijriDateCache) { hijriEl.textContent = hijriDateCache; return; }
+  try {
+    const now = new Date();
+    const dateStr = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    const response = await fetch(`https://api.aladhan.com/v1/gToH?date=${dateStr}`);
+    const data = await response.json();
+    if (data.code === 200 && data.data?.hijri) {
+      const h = data.data.hijri;
+      hijriDateCache = `${h.day} ${h.month.en} ${h.year} AH`;
+      hijriEl.textContent = hijriDateCache;
+    } else {
+      hijriEl.textContent = '--';
+    }
+  } catch {
+    hijriEl.textContent = '--';
+  }
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+updateHijriDate();
+
+/* ================= LIVE DEATH COUNTER (estimate, for reflection) =================
+   Purely a local arithmetic display: (average global deaths per year) / (seconds
+   per year) * (seconds elapsed since page load). No external calls, no per-person
+   data — just a rounded, published average used as a memento-mori style reminder,
+   consistent with the app's theme. */
+(function(){
+  const DEATHS_PER_YEAR = 60_000_000; // commonly cited rough global average (WHO/UN-style estimates)
+  const RATE_PER_SEC = DEATHS_PER_YEAR / (365.25*24*3600);
+  const startTs = performance.now();
+  const numEl = document.getElementById('deathCounter');
+  const rateEl = document.getElementById('deathRatePerSec');
+  if (rateEl) rateEl.textContent = RATE_PER_SEC.toFixed(2);
+  function tick(){
+    if (!numEl) return;
+    const elapsedSec = (performance.now() - startTs) / 1000;
+    const count = Math.floor(elapsedSec * RATE_PER_SEC);
+    numEl.textContent = count.toLocaleString();
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+
+/* ================= SHARED LOCATION (requested once, reused everywhere) =================
+   Both prayer times and the moon/sun panel need the device's coordinates.
+   Previously each called navigator.geolocation independently, which could
+   trigger the browser's permission prompt more than once. Now there's a
+   single request; every feature awaits the same cached result. If it's
+   denied, a manual "Enable location" retry is offered instead of the app
+   silently re-prompting on its own. */
+let qmCoords = null;
+let qmCoordsPromise = null;
+
+function qmGetLocation(){
+  if (qmCoords) return Promise.resolve(qmCoords);
+  if (qmCoordsPromise) return qmCoordsPromise;
+  qmCoordsPromise = new Promise((resolve, reject)=>{
+    if (!navigator.geolocation){ reject(new Error('Geolocation unsupported')); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        qmCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        resolve(qmCoords);
+      },
+      err=>{ qmCoordsPromise = null; reject(err); },
+      { enableHighAccuracy:false, maximumAge:1800000, timeout:10000 }
+    );
+  });
+  return qmCoordsPromise;
+}
+
+function qmRetryLocation(){
+  qmCoords = null;
+  qmCoordsPromise = null;
+  loadPrayer();
+  updateMoonAndSun();
+}
+
+/* ================= PRAYER TIMES ================= */
+async function loadPrayer(){
+  try{
+    const {lat,lon} = await qmGetLocation();
+    const r=await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=3`);
+    const j=await r.json();
+    const t=j.data.timings;
+    const prayerOrder=['Fajr','Dhuhr','Asr','Maghrib','Isha'];
+    
+    function updatePrayerDisplay(){
+      const now=new Date();
+      const currentMinutes = now.getHours()*60 + now.getMinutes();
+      let nextIndex = prayerOrder.findIndex(p=>{
+        const [h,m] = t[p].split(':').map(Number);
+        return h*60 + m > currentMinutes;
+      });
+      if(nextIndex===-1) nextIndex=0;
+      
+      const ticker=prayerOrder.map((p,i)=>{
+        let text=`${p} · ${t[p]}`;
+        if(i===nextIndex) text=`<span class="highlight">${text}</span>`;
+        return `<div>${text}</div>`;
+      }).join('');
+      
+      document.getElementById('prayerTicker').innerHTML= ticker + ticker;
+      
+      const [nh,nm]=t[prayerOrder[nextIndex]].split(':').map(Number);
+      let next=new Date(); next.setHours(nh,nm,0,0);
+      if(next<new Date()) next.setDate(next.getDate()+1);
+      const diff=next-new Date();
+      const hrs=two(Math.floor(diff/1000/3600));
+      const mins=two(Math.floor((diff/1000%3600)/60));
+      const secs=two(Math.floor((diff/1000)%60));
+      document.getElementById('countdown').textContent=`Next prayer: ${prayerOrder[nextIndex]} in ${hrs}:${mins}:${secs}`;
+    }
+    updatePrayerDisplay();
+    setInterval(updatePrayerDisplay,1000);
+  }catch{
+    document.getElementById('prayerTicker').innerHTML='<div>Location permission needed for prayer times · <a href="#" onclick="qmRetryLocation();return false;" style="color:var(--accent,#22d3ee);text-decoration:underline;">enable</a></div>';
+    document.getElementById('countdown').textContent='Next prayer: --:--:--';
+  }
+}
+loadPrayer();
+
+/* ================= MOON SURFACE TEXTURE (fixed procedural, no image download) =================
+   A hand-placed, fixed set of mare (dark plain), crater and fine-grain
+   speckle positions so the disc reads like an actual black-and-white lunar
+   photograph — same layout every render (a seeded PRNG for the speckle
+   field, computed once at load), so nothing depends on a network image
+   that could fail to load or delay the first paint. Coordinates are
+   fractions of the moon's radius R, relative to its centre. */
+function qmMulberry32(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+// Each mare is built from a few overlapping soft blobs rather than one
+// perfect circle, so it reads as an irregular dark plain, not a dot.
+const MOON_MARIA = [
+  { blobs: [{dx:-0.30,dy:-0.14,r:0.20},{dx:-0.14,dy:-0.24,r:0.17},{dx:-0.06,dy:-0.08,r:0.15}], a:0.30 }, // Imbrium-ish
+  { blobs: [{dx: 0.06,dy:-0.32,r:0.14},{dx: 0.14,dy:-0.20,r:0.11}], a:0.26 }, // Serenitatis-ish
+  { blobs: [{dx: 0.26,dy:-0.12,r:0.15},{dx: 0.34,dy: 0.00,r:0.12}], a:0.28 }, // Tranquillitatis-ish
+  { blobs: [{dx: 0.08,dy: 0.10,r:0.18},{dx:-0.02,dy: 0.20,r:0.13},{dx: 0.18,dy: 0.18,r:0.12}], a:0.30 }, // Nubium-ish
+  { blobs: [{dx:-0.34,dy: 0.22,r:0.11},{dx:-0.24,dy: 0.30,r:0.09}], a:0.22 },
+  { blobs: [{dx: 0.36,dy: 0.30,r:0.10}], a:0.20 },
+];
+const MOON_CRATERS = [
+  {dx:-0.42,dy:-0.30,r:0.045,a:0.5,rim:true},{dx:-0.10,dy:-0.48,r:0.075,a:0.48,rim:true},
+  {dx: 0.18,dy:-0.42,r:0.035,a:0.42},{dx: 0.40,dy:-0.28,r:0.05,a:0.48,rim:true},
+  {dx:-0.48,dy:-0.05,r:0.03,a:0.4},{dx:-0.28,dy: 0.02,r:0.055,a:0.48,rim:true},
+  {dx: 0.00,dy: 0.32,r:0.085,a:0.5,rim:true},{dx: 0.22,dy: 0.40,r:0.04,a:0.44},
+  {dx: 0.46,dy: 0.02,r:0.045,a:0.46},{dx: 0.36,dy:-0.42,r:0.03,a:0.38},
+  {dx:-0.20,dy: 0.42,r:0.045,a:0.44},{dx:-0.44,dy: 0.36,r:0.035,a:0.4},
+  {dx: 0.08,dy:-0.10,r:0.025,a:0.34},{dx:-0.02,dy: 0.55,r:0.03,a:0.38},
+  {dx: 0.52,dy: 0.30,r:0.03,a:0.38},{dx:-0.55,dy: 0.15,r:0.025,a:0.34},
+  {dx: 0.30,dy: 0.14,r:0.03,a:0.38},{dx:-0.05,dy:-0.55,r:0.035,a:0.38},
+  {dx: 0.55,dy:-0.05,r:0.028,a:0.34},{dx:-0.30,dy:-0.45,r:0.025,a:0.32},
+  {dx: 0.14,dy: 0.02,r:0.018,a:0.3},{dx:-0.14,dy:-0.18,r:0.02,a:0.32},
+  {dx: 0.42,dy: 0.16,r:0.022,a:0.32},{dx:-0.40,dy: 0.05,r:0.018,a:0.3},
+];
+const MOON_SPECKLE_RNG = qmMulberry32(1337);
+const MOON_SPECKLES = Array.from({length:340}, ()=>{
+  const ang = MOON_SPECKLE_RNG()*Math.PI*2;
+  const rad = Math.sqrt(MOON_SPECKLE_RNG())*0.95;
+  return {
+    dx: Math.cos(ang)*rad, dy: Math.sin(ang)*rad,
+    r: 0.003 + MOON_SPECKLE_RNG()*0.009,
+    a: 0.03 + MOON_SPECKLE_RNG()*0.10,
+    dark: MOON_SPECKLE_RNG() < 0.55
+  };
+});
+
+function paintMoonTexture(ctx, cx, cy, R){
+  // neutral grayscale base (no warm tint) — closer to an actual B&W photo
+  const grad = ctx.createRadialGradient(cx-R*0.3, cy-R*0.35, R*0.04, cx, cy, R*1.05);
+  grad.addColorStop(0,    '#f2f1ee');
+  grad.addColorStop(0.4,  '#d9d7d1');
+  grad.addColorStop(0.68, '#b3b1a9');
+  grad.addColorStop(0.87, '#8d8b82');
+  grad.addColorStop(1,    '#65635a');
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fillStyle=grad; ctx.fill();
+
+  // maria — irregular soft-edged dark plains built from overlapping blobs
+  MOON_MARIA.forEach(m=>{
+    m.blobs.forEach(b=>{
+      const mx=cx+b.dx*R, my=cy+b.dy*R, mr=b.r*R;
+      const mg=ctx.createRadialGradient(mx,my,0,mx,my,mr);
+      mg.addColorStop(0,   `rgba(72,70,64,${m.a})`);
+      mg.addColorStop(0.6, `rgba(72,70,64,${m.a*0.75})`);
+      mg.addColorStop(1,   `rgba(72,70,64,0)`);
+      ctx.beginPath(); ctx.arc(mx,my,mr,0,Math.PI*2); ctx.fillStyle=mg; ctx.fill();
+    });
+  });
+
+  // craters — soft multi-stop shadow (not a flat-edged dot) with a faint
+  // raised-rim highlight on a couple of the larger ones
+  MOON_CRATERS.forEach(c=>{
+    const px=cx+c.dx*R, py=cy+c.dy*R, pr=Math.max(0.6, c.r*R);
+
+    const cg = ctx.createRadialGradient(px,py,0, px,py,pr*1.35);
+    cg.addColorStop(0,    `rgba(38,37,33,${c.a})`);
+    cg.addColorStop(0.55, `rgba(38,37,33,${c.a*0.7})`);
+    cg.addColorStop(0.85, `rgba(38,37,33,${c.a*0.22})`);
+    cg.addColorStop(1,    `rgba(38,37,33,0)`);
+    ctx.beginPath(); ctx.arc(px,py,pr*1.35,0,Math.PI*2); ctx.fillStyle=cg; ctx.fill();
+
+    if (c.rim){
+      ctx.beginPath(); ctx.arc(px-pr*0.32, py-pr*0.32, pr*0.42, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,253,246,${c.a*0.22})`; ctx.fill();
+    }
+  });
+
+  // fine speckle grain for photographic detail at any zoom level
+  MOON_SPECKLES.forEach(s=>{
+    const sx=cx+s.dx*R, sy=cy+s.dy*R, sr=Math.max(0.35, s.r*R);
+    ctx.beginPath(); ctx.arc(sx,sy,sr,0,Math.PI*2);
+    ctx.fillStyle = s.dark ? `rgba(40,39,35,${s.a})` : `rgba(250,249,244,${s.a})`;
+    ctx.fill();
+  });
+
+  // limb darkening: real photographed moons read slightly darker toward the
+  // edge of the disc (the surface is lit at a grazing angle there)
+  const limb = ctx.createRadialGradient(cx,cy,R*0.6, cx,cy,R*1.02);
+  limb.addColorStop(0, 'rgba(15,14,12,0)');
+  limb.addColorStop(1, 'rgba(15,14,12,.24)');
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fillStyle=limb; ctx.fill();
+}
+
+/* ================= MOON PHASE RENDERER (exact geometry, 2D canvas) =================
+   Draws the true illuminated shape of the moon for a given illuminated
+   fraction (0–1, SunCalc's moonIll.fraction) using the same geometry that
+   produces the real phase: the visible disk is split at its centre line,
+   one half filled in fully (with the textured surface above), and a
+   lune-shaped "terminator" ellipse of half-width R·|1−2·fraction| is added
+   onto (gibbous) or cut out of (crescent) the other half. This is the
+   standard orthographic projection of a sphere's day/night line, so 95%
+   illuminated renders as a thin sliver of shadow near full, and low
+   percentages render as a thin crescent — not a softened approximation.
+   The whole shape is then rotated by SunCalc's real bright-limb angle so
+   the tilt of the crescent/gibbous also reflects real data. */
+function drawMoonPhase(fraction, phase, angle){
+  const wrap = document.getElementById('moonPhaseWrap');
+  const canvas = document.getElementById('moonPhaseCanvas');
+  if (!wrap || !canvas) return;
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const size = Math.max(60, wrap.clientWidth || 220);
+  if (canvas.width !== Math.round(size*dpr)){
+    canvas.width = Math.round(size*dpr);
+    canvas.height = Math.round(size*dpr);
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.save();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.scale(dpr,dpr);
+
+  const cx = size/2, cy = size/2, R = size/2 - 4;
+
+  ctx.translate(cx,cy);
+  ctx.rotate(angle || 0);
+  ctx.translate(-cx,-cy);
+
+  const f = Math.max(0, Math.min(1, fraction||0));
+  const waxing = (phase||0) < 0.5; // Northern-hemisphere convention: right side lit while waxing
+
+  // constant, very faint "earthshine" backdrop so the dark side is never pure
+  // flat black — the crisp bright/dark split below is unaffected by this
+  const earthshine = ctx.createRadialGradient(cx-R*0.3, cy-R*0.35, R*0.08, cx, cy, R);
+  earthshine.addColorStop(0, 'rgba(120,150,255,.10)');
+  earthshine.addColorStop(1, 'rgba(6,8,14,1)');
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fillStyle = earthshine; ctx.fill();
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.clip();
+
+  const dark = 'rgba(6,8,14,1)';
+
+  // half of the disk that's fully lit (or, for f<0.5, fully lit before we cut into it)
+  ctx.save();
+  ctx.beginPath();
+  if (waxing) ctx.rect(cx, cy-R, R, R*2); else ctx.rect(cx-R, cy-R, R, R*2);
+  ctx.clip();
+  paintMoonTexture(ctx, cx, cy, R);
+  ctx.restore();
+
+  const rx = R * Math.abs(1 - 2*f);
+  if (f > 0.5){
+    // gibbous: brighten a lens into the other half — the closer to full, the
+    // wider the lens, until it fully covers that half (f=1, full moon)
+    ctx.save();
+    ctx.beginPath();
+    if (waxing) ctx.rect(cx-R, cy-R, R, R*2); else ctx.rect(cx, cy-R, R, R*2);
+    ctx.clip();
+    ctx.beginPath(); ctx.ellipse(cx,cy, rx, R, 0, 0, Math.PI*2); ctx.clip();
+    paintMoonTexture(ctx, cx, cy, R);
+    ctx.restore();
+  } else if (f < 0.5){
+    // crescent: cut a dark lens out of the lit half — the closer to new,
+    // the wider the lens, until it swallows the whole half (f=0, new moon)
+    ctx.save();
+    ctx.beginPath();
+    if (waxing) ctx.rect(cx, cy-R, R, R*2); else ctx.rect(cx-R, cy-R, R, R*2);
+    ctx.clip();
+    ctx.beginPath(); ctx.ellipse(cx,cy, rx, R, 0, 0, Math.PI*2);
+    ctx.fillStyle = dark; ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.restore(); // circle clip
+  ctx.restore(); // dpr scale + rotation
+}
+
+/* ================= MOON + SUN ================= */
+let qmLastMoonPhase = null; // {fraction, phase, angle} — cached so we can redraw on resize
+
+function qmCardinalDirection(deg){
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  const idx = Math.round((((deg%360)+360)%360) / 22.5) % 16;
+  return dirs[idx];
+}
+function qmAltitudeDescription(alt){
+  if (alt < 0)  return "below the horizon — not visible right now";
+  if (alt < 10) return "very low, near the horizon";
+  if (alt < 30) return "low in the sky";
+  if (alt < 60) return "high in the sky";
+  return "nearly overhead";
+}
+
+// Country name is a nice-to-have, purely cosmetic addition to the sentence
+// ("From your location in France, look toward…") — it's optional, cached,
+// and never blocks the direction readout itself if it's slow or fails.
+let qmCountryName = null;
+let qmCountryPromise = null;
+function qmGetCountryName(lat, lon){
+  if (qmCountryName) return Promise.resolve(qmCountryName);
+  if (qmCountryPromise) return qmCountryPromise;
+  qmCountryPromise = fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`)
+    .then(r=>r.json())
+    .then(j=>{ qmCountryName = (j && j.countryName) ? j.countryName : null; return qmCountryName; })
+    .catch(()=>{ qmCountryPromise = null; return null; });
+  return qmCountryPromise;
+}
+
+function qmDirectionSentence(azDeg, altDeg, countryName){
+  const dir = qmCardinalDirection(azDeg);
+  const who = countryName ? `From your location in ${countryName}, the` : 'The';
+  if (altDeg < 0){
+    return `${who} Moon is <span class="highlight">below the horizon</span> right now — not visible from here.`;
+  }
+  const altDesc = qmAltitudeDescription(altDeg);
+  const whoLook = countryName ? `From your location in ${countryName}, look` : 'Look';
+  return `${whoLook} toward the <span class="highlight">${dir} (${Math.round(azDeg)}°)</span> — the Moon is ${altDesc}.`;
+}
+
+function updateMoonAndSun(){
+  if (typeof SunCalc === 'undefined'){
+    const mi = document.getElementById('moonInfo');
+    if (mi) mi.textContent = 'Moon data unavailable (sun/moon engine failed to load)';
+    return;
+  }
+  const now=new Date();
+
+  // The phase itself (illuminated fraction, waxing/waning, bright-limb angle)
+  // does NOT depend on the viewer's location — only altitude/azimuth and
+  // rise/set times do. So draw the real moon immediately, unconditionally.
+  // This is also the fix for the moon disappearing entirely when location
+  // was slow/denied: previously everything, including the drawing itself,
+  // waited on a geolocation promise that might never resolve.
+  const moonIll=SunCalc.getMoonIllumination(now);
+  qmLastMoonPhase = { fraction: moonIll.fraction, phase: moonIll.phase, angle: moonIll.angle };
+  drawMoonPhase(qmLastMoonPhase.fraction, qmLastMoonPhase.phase, qmLastMoonPhase.angle);
+  const glow = document.getElementById('moonGlowRing');
+  if (glow) glow.style.opacity = String(0.2 + moonIll.fraction*0.8);
+  const moonIllum=(moonIll.fraction*100).toFixed(1);
+  const mi=document.getElementById("moonInfo");
+  if(mi){
+    mi.innerHTML = `<b>${moonIllum}%</b> illuminated<br>Alt --° · Az --°<br>Rise -- · Set --`;
+  }
+
+  // Everything below (altitude/azimuth, rise/set, the compass, sun position)
+  // needs the viewer's coordinates, so it's layered in once location resolves.
+  qmGetLocation().then(({lat,lon})=>{
+    const moonPos=SunCalc.getMoonPosition(now,lat,lon);
+    const moonTimes=SunCalc.getMoonTimes(now,lat,lon);
+    const moonAlt=(moonPos.altitude*180/Math.PI).toFixed(1);
+    const moonAz=((moonPos.azimuth*180/Math.PI)+180).toFixed(1);
+
+    if(mi){
+      mi.innerHTML=`
+        <b>${moonIllum}%</b> illuminated<br>
+        Alt ${moonAlt}° · Az ${moonAz}°<br>
+        Rise ${moonTimes.rise?moonTimes.rise.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):"--"} · Set ${moonTimes.set?moonTimes.set.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):"--"}
+      `;
+    }
+    const arrow=document.getElementById("compassArrow");
+    if(arrow){ arrow.style.transform=`rotate(${moonAz}deg)`; }
+
+    // "Which way to look" — plain-language direction, computed from the
+    // real azimuth/altitude just calculated above, refreshed every cycle.
+    const azNum = parseFloat(moonAz), altNum = parseFloat(moonAlt);
+    const dirEl = document.getElementById('moonDirectionText');
+    if (dirEl){
+      dirEl.innerHTML = qmDirectionSentence(azNum, altNum, qmCountryName);
+      if (!qmCountryName){
+        qmGetCountryName(lat, lon).then(country=>{
+          if (country) dirEl.innerHTML = qmDirectionSentence(azNum, altNum, country);
+        });
+      }
+    }
+
+    const sunPos=SunCalc.getPosition(now,lat,lon);
+    const sunAlt=(sunPos.altitude*180/Math.PI).toFixed(2);
+    const sunAz=((sunPos.azimuth*180/Math.PI)+180).toFixed(2);
+    const dotS=document.getElementById("sunDot");
+    if(dotS && dotS.parentElement){
+      const skyWidth=dotS.parentElement.offsetWidth;
+      dotS.style.left=(sunAz/360*skyWidth)+"px";
+      dotS.style.bottom=Math.max(0, sunAlt/90*dotS.parentElement.offsetHeight)+"px";
+    }
+  }).catch(()=>{
+    if (mi) mi.innerHTML = `<b>${moonIllum}%</b> illuminated<br>Alt/Az/rise/set need location · <a href="#" onclick="qmRetryLocation();return false;" style="color:var(--accent,#22d3ee);text-decoration:underline;">enable</a>`;
+    const dirEl = document.getElementById('moonDirectionText');
+    if (dirEl) dirEl.innerHTML = 'Enable location to see which direction to look · <a href="#" onclick="qmRetryLocation();return false;">enable</a>';
+  });
+}
+updateMoonAndSun();
+setInterval(updateMoonAndSun,60000); // reuses the cached location — no repeat prompts
+
+window.addEventListener('resize', ()=>{
+  if (qmLastMoonPhase) drawMoonPhase(qmLastMoonPhase.fraction, qmLastMoonPhase.phase, qmLastMoonPhase.angle);
+});
+
+
+/* ================= LOCAL STORE (Quran-MAAR Vault) =================
+   No accounts, no server, nothing ever leaves this device. Bookmarks
+   (Qur'an + Hadith), last-read position, and font choice always live in
+   localStorage as a fast cache, and can optionally be mirrored into a
+   real folder on disk that the person picks — via the File System
+   Access API (Chromium-based browsers). That folder gets one data file,
+   a small rolling set of timestamped backups, and is auto-reconnected
+   (silently, no re-prompt) on future visits once permission is granted.
+   Every browser also gets manual Export/Import of a single file as a
+   universal fallback where folder access isn't supported (Firefox, Safari). */
+
+const QM_FSA_SUPPORTED = typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';
+const QM_MARKER_FILE = '.quran-maar';
+const QM_DATA_FILE = 'quran-maar-data.json';
+const QM_MAX_BACKUPS = 15;
+const QM_IDB_NAME = 'quran-maar-fs', QM_IDB_STORE = 'handles';
+
+function qmCollectState(){
+  return {
+    app: 'Quran Maar',
+    format: 'quran-maar',
+    version: 1,
+    savedAt: new Date().toISOString(),
+    bookmarks: JSON.parse(qmStorageGet('qm_bookmarks') || '{}'),
+    hadithBookmarks: JSON.parse(qmStorageGet('qm_hadith_bookmarks') || '{}'),
+    lastRead: JSON.parse(qmStorageGet('qm_last_read') || 'null'),
+    arabicFontIndex: qmStorageGet('qm_arabic_font_index') || '0',
+    arabicFontLabel: qmStorageGet('qm_arabic_font') || null
+  };
+}
+
+function qmApplyState(incoming){
+  if (!incoming || typeof incoming !== 'object') return;
+  const state = incoming.state || incoming; // tolerate either a raw state or a {state:...} wrapper (e.g. backup files)
+  if (state.bookmarks) qmStorageSet('qm_bookmarks', JSON.stringify(state.bookmarks));
+  if (state.hadithBookmarks) qmStorageSet('qm_hadith_bookmarks', JSON.stringify(state.hadithBookmarks));
+  if (state.lastRead) qmStorageSet('qm_last_read', JSON.stringify(state.lastRead));
+  if (state.arabicFontIndex !== undefined) qmStorageSet('qm_arabic_font_index', String(state.arabicFontIndex));
+  if (typeof updateBookmarkCount === 'function') updateBookmarkCount();
+  if (typeof applyArabicFont === 'function') applyArabicFont();
+  if (typeof renderResumeBanner === 'function') renderResumeBanner();
+}
+
+/* ---------- tiny IndexedDB helper (stores only the folder handle) ---------- */
+function qmIdbOpen(){
+  return new Promise((resolve, reject)=>{
+    if (!('indexedDB' in window)) return reject(new Error('no-idb'));
+    const req = indexedDB.open(QM_IDB_NAME, 1);
+    req.onupgradeneeded = ()=> req.result.createObjectStore(QM_IDB_STORE);
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+async function qmIdbSet(key, value){
+  const db = await qmIdbOpen();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(QM_IDB_STORE, 'readwrite');
+    tx.objectStore(QM_IDB_STORE).put(value, key);
+    tx.oncomplete = ()=> resolve();
+    tx.onerror = ()=> reject(tx.error);
+  });
+}
+async function qmIdbGet(key){
+  const db = await qmIdbOpen();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(QM_IDB_STORE, 'readonly');
+    const req = tx.objectStore(QM_IDB_STORE).get(key);
+    req.onsuccess = ()=> resolve(req.result || null);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+
+const QMVault = {
+  mode: 'checking',       // 'folder' | 'local' | 'needs-permission' | 'checking'
+  dirHandle: null,
+  lastSaveAt: null,
+  lastBackupAt: null,
+  writesSinceBackup: 0,
+  saveTimer: null,
+  busy: false,
+
+  async verifyPermission(handle, mode){
+    try{ return (await handle.queryPermission({ mode })) === 'granted'; }
+    catch(e){ return false; }
+  },
+  async requestPermission(handle, mode){
+    try{ return (await handle.requestPermission({ mode })) === 'granted'; }
+    catch(e){ return false; }
+  },
+
+  // Called once on page load. Never prompts — only silently reconnects if
+  // the browser already remembers permission was granted for this folder.
+  async tryAutoReconnect(){
+    if (!QM_FSA_SUPPORTED){ this.mode = 'local'; return false; }
+    try{
+      const handle = await qmIdbGet('dirHandle');
+      if (!handle){ this.mode = 'local'; return false; }
+      const ok = await this.verifyPermission(handle, 'readwrite');
+      this.dirHandle = handle;
+      if (ok){
+        this.mode = 'folder';
+        await this.loadFromFolder();
+        return true;
+      }
+      this.mode = 'needs-permission';
+      return false;
+    }catch(e){
+      console.warn('Quran-MAAR: auto-reconnect failed', e);
+      this.mode = 'local';
+      return false;
+    }
+  },
+
+  async connectNewFolder(){
+    if (!QM_FSA_SUPPORTED) throw new Error('unsupported');
+    const handle = await window.showDirectoryPicker({ mode:'readwrite' });
+    this.dirHandle = handle;
+    this.mode = 'folder';
+    await qmIdbSet('dirHandle', handle);
+    await this.writeData();
+    await this.writeMarker();
+    await this.createBackup(true);
+    return handle;
+  },
+
+  async connectExistingFolder(){
+    if (!QM_FSA_SUPPORTED) throw new Error('unsupported');
+    const handle = await window.showDirectoryPicker({ mode:'readwrite' });
+    const valid = await this.validateFolder(handle);
+    this.dirHandle = handle;
+    this.mode = 'folder';
+    await qmIdbSet('dirHandle', handle);
+    if (valid){
+      await this.loadFromFolder();
+    } else {
+      // empty/new folder chosen as the switch target — seed it with what's here now
+      await this.writeData();
+      await this.writeMarker();
+      await this.createBackup(true);
+    }
+    return handle;
+  },
+
+  async validateFolder(handle){
+    for (const name of [QM_MARKER_FILE, QM_DATA_FILE]){
+      try{ await handle.getFileHandle(name); return true; }catch(e){ /* try next */ }
+    }
+    return false;
+  },
+
+  async writeMarker(){
+    try{
+      const fh = await this.dirHandle.getFileHandle(QM_MARKER_FILE, { create:true });
+      const w = await fh.createWritable();
+      await w.write(JSON.stringify({ app:'Quran Maar', createdAt:new Date().toISOString() }));
+      await w.close();
+    }catch(e){ console.warn('Quran-MAAR: marker write failed', e); }
+  },
+
+  async writeData(){
+    const fh = await this.dirHandle.getFileHandle(QM_DATA_FILE, { create:true });
+    const w = await fh.createWritable();
+    await w.write(JSON.stringify(qmCollectState(), null, 2));
+    await w.close();
+  },
+
+  async loadFromFolder(){
+    try{
+      const fh = await this.dirHandle.getFileHandle(QM_DATA_FILE).catch(()=>null);
+      if (fh){
+        const text = await (await fh.getFile()).text();
+        if (text && text.trim()) qmApplyState(JSON.parse(text));
+      }
+      await this.writeData();
+      await this.writeMarker();
+    }catch(e){
+      console.warn('Quran-MAAR: load from folder failed, keeping local data', e);
+    }
+  },
+
+  scheduleSave(){
+    if (this.saveTimer) clearTimeout(this.saveTimer);
+    this.saveTimer = setTimeout(()=> this.persistNow(), 600);
+  },
+
+  async persistNow(){
+    qmSetLinkStatus();
+    if (this.mode !== 'folder' || !this.dirHandle) return;
+    if (this.busy){ this.saveTimer = setTimeout(()=> this.persistNow(), 400); return; }
+    this.busy = true;
+    try{
+      await this.writeData();
+      this.lastSaveAt = new Date();
+      this.writesSinceBackup++;
+      qmSetLinkStatus('ok');
+      const dueForBackup = this.writesSinceBackup >= 20 ||
+        !this.lastBackupAt || (Date.now() - this.lastBackupAt.getTime()) > 6*60*60*1000;
+      if (dueForBackup) await this.createBackup(true);
+    }catch(e){
+      console.warn('Quran-MAAR: persist to folder failed', e);
+      qmSetLinkStatus('warn');
+    }finally{
+      this.busy = false;
+    }
+  },
+
+  async createBackup(silent){
+    if (this.mode !== 'folder' || !this.dirHandle) return false;
+    try{
+      const backupsDir = await this.dirHandle.getDirectoryHandle('backups', { create:true });
+      const stamp = new Date().toISOString().replace(/[:.]/g,'-');
+      const fh = await backupsDir.getFileHandle(`backup-${stamp}.json`, { create:true });
+      const w = await fh.createWritable();
+      await w.write(JSON.stringify({ version:1, savedAt:new Date().toISOString(), state:qmCollectState() }, null, 2));
+      await w.close();
+      this.lastBackupAt = new Date();
+      this.writesSinceBackup = 0;
+      await this.pruneBackups(backupsDir);
+      return true;
+    }catch(e){
+      console.warn('Quran-MAAR: backup failed', e);
+      return false;
+    }
+  },
+
+  async pruneBackups(backupsDir){
+    const names = [];
+    for await (const [name, handle] of backupsDir.entries()){
+      if (handle.kind === 'file' && name.startsWith('backup-')) names.push(name);
+    }
+    names.sort().reverse();
+    for (const name of names.slice(QM_MAX_BACKUPS)){
+      try{ await backupsDir.removeEntry(name); }catch(e){ /* ignore */ }
+    }
+  },
+
+  async listBackups(){
+    if (this.mode !== 'folder' || !this.dirHandle) return [];
+    try{
+      const backupsDir = await this.dirHandle.getDirectoryHandle('backups', { create:true });
+      const names = [];
+      for await (const [name, handle] of backupsDir.entries()){
+        if (handle.kind === 'file' && name.startsWith('backup-')) names.push(name);
+      }
+      return names.sort().reverse();
+    }catch(e){ return []; }
+  },
+
+  async restoreBackup(name){
+    if (this.mode !== 'folder' || !this.dirHandle) return false;
+    try{
+      const backupsDir = await this.dirHandle.getDirectoryHandle('backups', { create:true });
+      const fh = await backupsDir.getFileHandle(name);
+      const parsed = JSON.parse(await (await fh.getFile()).text());
+      qmApplyState(parsed);
+      await this.writeData();
+      return true;
+    }catch(e){
+      console.warn('Quran-MAAR: restore failed', e);
+      return false;
+    }
+  },
+
+  exportFile(){
+    const blob = new Blob([JSON.stringify(qmCollectState(), null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `Quran-MAAR-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  },
+
+  async importFile(file){
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    if (this.mode === 'folder' && this.dirHandle) await this.createBackup(true);
+    qmApplyState(parsed);
+    if (this.mode === 'folder' && this.dirHandle) await this.writeData();
+  },
+};
+
+// qmStorageSet (defined earlier) calls this hook automatically on every save,
+// which schedules a debounced write to the connected folder (if any).
+window.__qmSyncToFile = () => QMVault.scheduleSave();
+
+function qmFmtDateTime(d){
+  if (!d) return 'Never';
+  return d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function qmSetLinkStatus(status){
+  const dot = document.getElementById('localStoreDot');
+  if (dot) dot.classList.toggle('linked', QMVault.mode === 'folder');
+  const sdot = document.getElementById('lsAutosaveDot');
+  const sval = document.getElementById('lsAutosaveValue');
+  if (!sdot || !sval) return;
+  sdot.classList.remove('is-ok','is-warn','is-off');
+  if (status === 'ok'){ sdot.classList.add('is-ok'); sval.textContent = 'Saved to your folder just now'; }
+  else if (status === 'warn'){ sdot.classList.add('is-warn'); sval.textContent = 'Folder unreachable — saved in browser'; }
+  else if (QMVault.mode === 'folder'){ sdot.classList.add('is-ok'); sval.textContent = 'Saved to your folder'; }
+  else { sdot.classList.add('is-ok'); sval.textContent = 'Saved in this browser'; }
+}
+
+function qmShowToast(message, warn){
+  const host = document.getElementById('lsToastHost');
+  if (!host) return;
+  host.innerHTML = `<div class="ls-toast${warn?' ls-toast-warn':''}">${message}</div>`;
+  clearTimeout(qmShowToast._t);
+  qmShowToast._t = setTimeout(()=>{ host.innerHTML = ''; }, 4200);
+}
+
+async function qmRenderBackupList(){
+  const listEl = document.getElementById('lsBackupList');
+  const emptyEl = document.getElementById('lsBackupEmpty');
+  if (!listEl || !emptyEl) return;
+  const backups = await QMVault.listBackups();
+  listEl.innerHTML = '';
+  if (!backups.length){
+    emptyEl.hidden = false;
+    return;
+  }
+  emptyEl.hidden = true;
+  backups.forEach(name=>{
+    const row = document.createElement('div');
+    row.className = 'ls-backup-item';
+    const label = document.createElement('span');
+    label.textContent = name.replace('backup-','').replace('.json','');
+    const btn = document.createElement('button');
+    btn.textContent = 'Restore';
+    btn.onclick = async ()=>{
+      btn.disabled = true; btn.textContent = 'Restoring…';
+      const ok = await QMVault.restoreBackup(name);
+      if (ok){ qmShowToast('Restored from backup.'); renderLocalStorePanel(); }
+      else { qmShowToast('Could not restore that backup.', true); btn.disabled = false; btn.textContent = 'Restore'; }
+    };
+    row.appendChild(label); row.appendChild(btn);
+    listEl.appendChild(row);
+  });
+}
+
+function renderLocalStorePanel(){
+  const area = document.getElementById('authArea');
+  if (!area) return;
+
+  let modeText, folderText, btnConnectHidden, btnReconnectHidden, btnChangeHidden;
+  if (QMVault.mode === 'folder'){
+    modeText = 'Folder storage (private files on this device)';
+    folderText = QMVault.dirHandle ? QMVault.dirHandle.name : 'Connected';
+    btnConnectHidden = true; btnReconnectHidden = true; btnChangeHidden = false;
+  } else if (QMVault.mode === 'needs-permission'){
+    modeText = 'Folder storage (needs one click to reconnect)';
+    folderText = QMVault.dirHandle ? QMVault.dirHandle.name : 'Permission needed';
+    btnConnectHidden = true; btnReconnectHidden = false; btnChangeHidden = false;
+  } else if (!QM_FSA_SUPPORTED){
+    modeText = "This browser only — folder storage isn't supported here";
+    folderText = 'Not available in this browser';
+    btnConnectHidden = true; btnReconnectHidden = true; btnChangeHidden = true;
+  } else {
+    modeText = 'This browser only — connect a folder for extra safety';
+    folderText = 'Not connected';
+    btnConnectHidden = false; btnReconnectHidden = true; btnChangeHidden = true;
+  }
+
+  area.innerHTML = `
+    <div class="localstore-menu">
+      <button class="localstore-btn" id="localStoreToggleBtn">
+        <span class="dot ${QMVault.mode==='folder'?'linked':(QMVault.mode==='needs-permission'?'warn':'')}" id="localStoreDot"></span>
+        💾 Local Store
+      </button>
+      <div class="localstore-dropdown" id="localStoreDropdown">
+        <div class="localstore-header">
+          <strong>Quran-MAAR — 100% local</strong>
+          <small>Bookmarks (Qur'an + Hadith), last read, and your font choice are saved on this device only. Nothing is ever uploaded anywhere.</small>
+        </div>
+        <div class="ls-status">
+          <div class="ls-status-row"><span class="ls-status-label">Storage mode</span><span class="ls-status-value" id="lsModeValue">${modeText}</span></div>
+          <div class="ls-status-row"><span class="ls-status-label">Connected folder</span><span class="ls-status-value" id="lsFolderValue">${folderText}</span></div>
+          <div class="ls-status-row"><span class="ls-status-label"><span class="ls-dot" id="lsAutosaveDot"></span>Auto-save</span><span class="ls-status-value" id="lsAutosaveValue">—</span></div>
+          <div class="ls-status-row"><span class="ls-status-label">Last backup</span><span class="ls-status-value" id="lsLastBackupValue">${qmFmtDateTime(QMVault.lastBackupAt)}</span></div>
+        </div>
+        <div id="lsToastHost"></div>
+        <div class="ls-btn-row">
+          <button class="ls-btn ls-btn-primary" id="lsBtnConnect" ${btnConnectHidden?'hidden':''}>Connect a Folder</button>
+          <button class="ls-btn ls-btn-primary" id="lsBtnReconnect" ${btnReconnectHidden?'hidden':''}>Reconnect Folder</button>
+          <button class="ls-btn" id="lsBtnChange" ${btnChangeHidden?'hidden':''}>Change Folder</button>
+          <button class="ls-btn" id="lsBtnBackupNow">Create Backup Now</button>
+          <button class="ls-btn" id="lsBtnExport">Export File</button>
+          <button class="ls-btn" id="lsBtnImport">Import File</button>
+          <input type="file" id="lsImportInput" accept="application/json" style="display:none;">
+        </div>
+        <div class="ls-backups">
+          <div class="ls-backups-title">Backups</div>
+          <div class="ls-backup-list" id="lsBackupList"></div>
+          <p class="ls-backup-empty" id="lsBackupEmpty" hidden>No backups yet. Create one anytime with "Create Backup Now", or one will be made automatically as you use the app.</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  qmSetLinkStatus();
+  qmRenderBackupList();
+
+  const toggleBtn = document.getElementById('localStoreToggleBtn');
+  const dropdown = document.getElementById('localStoreDropdown');
+  toggleBtn.onclick = (e) => { e.stopImmediatePropagation(); dropdown.classList.toggle('show'); };
+  document.addEventListener('click', function closeDropdown(ev){
+    if (!toggleBtn.parentElement.contains(ev.target)){
+      dropdown.classList.remove('show');
+      document.removeEventListener('click', closeDropdown);
+    }
+  }, { once:true });
+
+  document.getElementById('lsBtnConnect').onclick = async ()=>{
+    try{
+      await QMVault.connectNewFolder();
+      qmShowToast('Connected — your bookmarks now live in this folder too.');
+      renderLocalStorePanel();
+    }catch(err){
+      if (err && err.name === 'AbortError') return;
+      qmShowToast(QM_FSA_SUPPORTED ? 'Could not connect to that folder.' : "Folder storage isn't supported in this browser.", true);
+    }
+  };
+
+  document.getElementById('lsBtnReconnect').onclick = async ()=>{
+    try{
+      const ok = await QMVault.requestPermission(QMVault.dirHandle, 'readwrite');
+      if (ok){
+        QMVault.mode = 'folder';
+        await QMVault.loadFromFolder();
+        qmShowToast('Reconnected to your folder.');
+        renderLocalStorePanel();
+      } else {
+        qmShowToast('Permission was not granted.', true);
+      }
+    }catch(err){ qmShowToast('Could not reconnect.', true); }
+  };
+
+  document.getElementById('lsBtnChange').onclick = async ()=>{
+    try{
+      await QMVault.connectExistingFolder();
+      qmShowToast('Storage folder updated.');
+      renderLocalStorePanel();
+    }catch(err){
+      if (err && err.name === 'AbortError') return;
+      qmShowToast('Could not change folder.', true);
+    }
+  };
+
+  document.getElementById('lsBtnBackupNow').onclick = async ()=>{
+    if (QMVault.mode !== 'folder'){ qmShowToast('Connect a folder first to create backups.', true); return; }
+    const ok = await QMVault.createBackup();
+    qmShowToast(ok ? 'Backup created.' : 'Could not create a backup right now.', !ok);
+    renderLocalStorePanel();
+  };
+
+  document.getElementById('lsBtnExport').onclick = ()=>{
+    QMVault.exportFile();
+    qmShowToast('Bookmarks and progress exported.');
+  };
+
+  const importInput = document.getElementById('lsImportInput');
+  document.getElementById('lsBtnImport').onclick = ()=> importInput.click();
+  importInput.onchange = async ()=>{
+    const file = importInput.files[0];
+    if (!file) return;
+    try{
+      await QMVault.importFile(file);
+      qmShowToast('Bookmarks and progress imported.');
+      renderLocalStorePanel();
+    }catch(err){
+      qmShowToast('That file could not be read as Quran-MAAR data.', true);
+    }
+    importInput.value = '';
+  };
+}
+
+async function qmInitLocalStore(){
+  renderLocalStorePanel(); // paint immediately in 'checking' state, no flash of missing UI
+  await QMVault.tryAutoReconnect();
+  renderLocalStorePanel();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', qmInitLocalStore);
+} else {
+  qmInitLocalStore();
+}
+
+/* ================= QURAN + HADITH + BOOKMARKS (original code continues) ================= */
+/* The rest of the original script remains exactly the same */
+const QURAN_API = 'https://api.alquran.cloud/v1';
+const ARABIC_EDITION = 'quran-uthmani';
+const AUDIO_EDITION = 'ar.alafasy';
+const AUDIO_CDN = (ayahGlobalNumber)=> `https://cdn.islamic.network/quran/audio/128/${AUDIO_EDITION}/${ayahGlobalNumber}.mp3`;
+
+let currentSurahNumber = null;
+let currentAudio = null;
+let currentPlayingAyahEl = null;
+let playQueue = [];
+
+const LANGUAGES = [
+  { code:'en', label:'English',          edition:'en.sahih' },
+  { code:'bn', label:'Bangla',           edition:'bn.bengali' },
+  { code:'zh', label:'Chinese (Simplified)', edition:'zh.jian' },
+  { code:'hi', label:'Hindi',            edition:'hi.hindi' },
+  { code:'ur', label:'Urdu',             edition:'ur.jalandhry' },
+  { code:'es', label:'Spanish',          edition:'es.cortes' },
+  { code:'fr', label:'French',           edition:'fr.hamidullah' },
+  { code:'id', label:'Indonesian',       edition:'id.indonesian' },
+  { code:'tr', label:'Turkish',          edition:'tr.diyanet' },
+  { code:'ru', label:'Russian',          edition:'ru.kuliev' },
+  { code:'ms', label:'Malay',            edition:'ms.basmeih' },
+  { code:'fa', label:'Persian (Farsi)',  edition:'fa.makarem' },
+  { code:'it', label:'Italian',          edition:'it.piccardo' },
+  { code:'ja', label:'Japanese',         edition:'ja.japanese' },
+  { code:'ko', label:'Korean',           edition:'ko.korean' },
+  { code:'th', label:'Thai',             edition:'th.thai' },
+  { code:'sw', label:'Swahili',          edition:'sw.barwani' },
+  { code:'ta', label:'Tamil',            edition:'ta.tamil' },
+  { code:'ml', label:'Malayalam',        edition:'ml.abdulhameed' },
+  { code:'de', label:'German',           edition:'de.bubenheim' },
+];
+
+const langSelect = document.getElementById('langSelect');
+LANGUAGES.forEach(l=>{
+  const opt = document.createElement('option');
+  opt.value = l.edition; opt.textContent = l.label;
+  langSelect.appendChild(opt);
+});
+langSelect.value = 'en.sahih';
+
+/* ================= ARABIC FONT SELECTOR (top 10) ================= */
+const ARABIC_FONTS = [
+  { label:'Noto Naskh Arabic (default)', stack:"'Noto Naskh Arabic','Amiri',serif" },
+  { label:'Amiri',                       stack:"'Amiri',serif" },
+  { label:'Amiri Quran',                 stack:"'Amiri Quran','Amiri',serif" },
+  { label:'Scheherazade New',            stack:"'Scheherazade New','Amiri',serif" },
+  { label:'Lateef',                      stack:"'Lateef','Amiri',serif" },
+  { label:'Reem Kufi',                   stack:"'Reem Kufi',sans-serif" },
+  { label:'Aref Ruqaa',                  stack:"'Aref Ruqaa',serif" },
+  { label:'Harmattan',                   stack:"'Harmattan',sans-serif" },
+  { label:'Markazi Text',                stack:"'Markazi Text',serif" },
+  { label:'Cairo',                       stack:"'Cairo',sans-serif" },
+  { label:'Rakkas',                      stack:"'Rakkas',cursive" },
+];
+const arabicFontSelect = document.getElementById('arabicFontSelect');
+ARABIC_FONTS.forEach((f,i)=>{
+  const opt = document.createElement('option');
+  opt.value = String(i); opt.textContent = f.label;
+  arabicFontSelect.appendChild(opt);
+});
+
+function applyArabicFont(){
+  const savedIndex = parseInt(qmStorageGet('qm_arabic_font_index') ?? '0', 10);
+  const idx = Number.isInteger(savedIndex) && ARABIC_FONTS[savedIndex] ? savedIndex : 0;
+  arabicFontSelect.value = String(idx);
+  document.documentElement.style.setProperty('--arabic-font', ARABIC_FONTS[idx].stack);
+  qmStorageSet('qm_arabic_font', ARABIC_FONTS[idx].label);
+}
+arabicFontSelect.addEventListener('change', ()=>{
+  const idx = parseInt(arabicFontSelect.value, 10);
+  qmStorageSet('qm_arabic_font_index', String(idx));
+  document.documentElement.style.setProperty('--arabic-font', ARABIC_FONTS[idx].stack);
+  qmStorageSet('qm_arabic_font', ARABIC_FONTS[idx].label);
+});
+applyArabicFont();
+
+let surahList = [];
+
+function getLastRead(){
+  try{ return JSON.parse(qmStorageGet('qm_last_read') || 'null'); }catch{ return null; }
+}
+function setLastRead(surahNumber, surahEnglishName, ayahNumberInSurah){
+  qmStorageSet('qm_last_read', JSON.stringify({ surahNumber, surahEnglishName, ayahNumberInSurah, ts: Date.now() }));
+}
+function getBookmarks(){
+  try{ return JSON.parse(qmStorageGet('qm_bookmarks') || '{}'); }catch{ return {}; }
+}
+function isBookmarked(surahNumber, ayahNumberInSurah){
+  const b = getBookmarks();
+  return !!(b[surahNumber] && b[surahNumber][ayahNumberInSurah]);
+}
+function toggleBookmark(surahNumber, ayahNumberInSurah, richData){
+  const b = getBookmarks();
+  b[surahNumber] = b[surahNumber] || {};
+  if (b[surahNumber][ayahNumberInSurah]) {
+    delete b[surahNumber][ayahNumberInSurah];
+    if (!Object.keys(b[surahNumber]).length) delete b[surahNumber];
+  } else {
+    b[surahNumber][ayahNumberInSurah] = richData || true;
+  }
+  qmStorageSet('qm_bookmarks', JSON.stringify(b));
+  updateBookmarkCount();
+}
+
+function getHadithBookmarks(){
+  try{ return JSON.parse(qmStorageGet('qm_hadith_bookmarks') || '{}'); }catch{ return {}; }
+}
+function isHadithBookmarked(collectionId, hadithNum){
+  const b = getHadithBookmarks();
+  return !!(b[collectionId] && b[collectionId][hadithNum]);
+}
+function toggleHadithBookmark(collectionId, hadithNum, richData){
+  const b = getHadithBookmarks();
+  b[collectionId] = b[collectionId] || {};
+  if (b[collectionId][hadithNum]) {
+    delete b[collectionId][hadithNum];
+    if (!Object.keys(b[collectionId]).length) delete b[collectionId];
+  } else {
+    b[collectionId][hadithNum] = richData || true;
+  }
+  qmStorageSet('qm_hadith_bookmarks', JSON.stringify(b));
+  updateBookmarkCount();
+}
+
+function updateBookmarkCount(){
+  const qb = getBookmarks();
+  const hb = getHadithBookmarks();
+  const qCount = Object.values(qb).reduce((acc,s)=>acc+Object.keys(s).length, 0);
+  const hCount = Object.values(hb).reduce((acc,c)=>acc+Object.keys(c).length, 0);
+  const total = qCount + hCount;
+  const el = document.getElementById('bookmarkCount');
+  if(el) el.textContent = total > 0 ? total : '';
+}
+
+let bmActiveTab = 'quran';
+function renderBookmarksPanel(){
+  renderQuranBookmarks();
+  renderHadithBookmarks();
+  updateBookmarkCount();
+}
+function renderQuranBookmarks(){
+  const el = document.getElementById('bmQuranList');
+  const b = getBookmarks();
+  const entries = [];
+  Object.entries(b).forEach(([surahNum, ayahs])=>{
+    Object.entries(ayahs).forEach(([ayahNum, data])=>{
+      entries.push({ surahNum: parseInt(surahNum), ayahNum: parseInt(ayahNum), data });
+    });
+  });
+  entries.sort((a,b)=> a.surahNum - b.surahNum || a.ayahNum - b.ayahNum);
+  if(!entries.length){
+    el.innerHTML = `<div class="bm-empty"><div class="bm-empty-icon">☆</div><div>No Qur'an bookmarks yet.</div><div style="margin-top:6px;font-size:12px;">Tap ☆ on any verse while reading to save it here.</div></div>`;
+    return;
+  }
+  el.innerHTML = entries.map(({surahNum, ayahNum, data})=>{
+    const surahName = (data && data.surahName) ? data.surahName : `Surah ${surahNum}`;
+    const arabic    = (data && data.arabicText) ? data.arabicText : '';
+    const trans     = (data && data.translationText) ? data.translationText : '';
+    return `
+      <div class="bookmark-card" data-surah="${surahNum}" data-ayah="${ayahNum}">
+        <div class="bm-meta">
+          <span class="bm-label">★ ${surahName} · Verse ${ayahNum}</span>
+          <button class="bm-delete" data-surah="${surahNum}" data-ayah="${ayahNum}" title="Remove bookmark">✕</button>
+        </div>
+        ${arabic ? `<div class="bm-arabic">${arabic}</div>` : ''}
+        ${trans  ? `<div class="bm-text">${trans}</div>` : ''}
+      </div>`;
+  }).join('');
+  el.querySelectorAll('.bookmark-card').forEach(card=>{
+    card.onclick = (e)=>{
+      if(e.target.classList.contains('bm-delete')) return;
+      const sn = parseInt(card.dataset.surah);
+      const an = parseInt(card.dataset.ayah);
+      showBookmarksPanel(false);
+      openTab('quran');
+      openSurah(sn, an);
+    };
+  });
+  el.querySelectorAll('.bm-delete').forEach(btn=>{
+    btn.onclick = (e)=>{
+      e.stopPropagation();
+      toggleBookmark(parseInt(btn.dataset.surah), parseInt(btn.dataset.ayah));
+      renderQuranBookmarks();
+    };
+  });
+}
+function renderHadithBookmarks(){
+  const el = document.getElementById('bmHadithList');
+  const b = getHadithBookmarks();
+  const entries = [];
+  Object.entries(b).forEach(([collId, hadiths])=>{
+    Object.entries(hadiths).forEach(([num, data])=>{
+      entries.push({ collId, num, data });
+    });
+  });
+  if(!entries.length){
+    el.innerHTML = `<div class="bm-empty"><div class="bm-empty-icon">☆</div><div>No Hadith bookmarks yet.</div><div style="margin-top:6px;font-size:12px;">Tap ☆ on any hadith while reading to save it here.</div></div>`;
+    return;
+  }
+  const collMap = Object.fromEntries(HADITH_COLLECTIONS.map(c=>[c.id, c.name]));
+  el.innerHTML = entries.map(({collId, num, data})=>{
+    const collName = collMap[collId] || collId;
+    const text = (data && data.text) ? data.text : '';
+    return `
+      <div class="bookmark-card" data-coll="${collId}" data-num="${num}">
+        <div class="bm-meta">
+          <span class="bm-label">★ ${collName} · #${num}</span>
+          <button class="bm-delete" data-coll="${collId}" data-num="${num}" title="Remove bookmark">✕</button>
+        </div>
+        ${text ? `<div class="bm-text">${text}</div>` : ''}
+      </div>`;
+  }).join('');
+  el.querySelectorAll('.bookmark-card').forEach(card=>{
+    card.onclick = (e)=>{
+      if(e.target.classList.contains('bm-delete')) return;
+      showBookmarksPanel(false);
+      openTab('hadith');
+      document.getElementById('hadithCollectionSelect').value = card.dataset.coll;
+      refreshHadithLangOptions();
+      loadHadithCollection().then(()=>{
+        const n = parseInt(card.dataset.num);
+        const idx = hadithCurrentList.findIndex(h=>(h.hadithnumber??h.hadithNumber??h.number)==n);
+        if(idx>-1){ hadithCurrentPage=Math.floor(idx/HADITH_PAGE_SIZE); renderHadithPage(); }
+      });
+    };
+  });
+  el.querySelectorAll('.bm-delete').forEach(btn=>{
+    btn.onclick = (e)=>{
+      e.stopPropagation();
+      toggleHadithBookmark(btn.dataset.coll, btn.dataset.num);
+      renderHadithBookmarks();
+    };
+  });
+}
+function showBookmarksPanel(show){
+  document.getElementById('bookmarksPanel').style.display = show ? 'block' : 'none';
+  document.getElementById('quranMainView').style.display = show ? 'none' : 'block';
+  const btn = document.getElementById('bookmarksToggleBtn');
+  if(btn) btn.style.background = show ? 'rgba(251,191,36,.15)' : '';
+  if(show) renderBookmarksPanel();
+}
+document.getElementById('bookmarksToggleBtn').onclick = ()=>{
+  const isShowing = document.getElementById('bookmarksPanel').style.display !== 'none';
+  showBookmarksPanel(!isShowing);
+};
+document.getElementById('bmTabQuran').onclick = ()=>{
+  bmActiveTab = 'quran';
+  document.getElementById('bmQuranList').style.display = 'block';
+  document.getElementById('bmHadithList').style.display = 'none';
+  document.getElementById('bmTabQuran').classList.add('active');
+  document.getElementById('bmTabHadith').classList.remove('active');
+};
+document.getElementById('bmTabHadith').onclick = ()=>{
+  bmActiveTab = 'hadith';
+  document.getElementById('bmQuranList').style.display = 'none';
+  document.getElementById('bmHadithList').style.display = 'block';
+  document.getElementById('bmTabHadith').classList.add('active');
+  document.getElementById('bmTabQuran').classList.remove('active');
+};
+document.getElementById('clearBookmarksBtn').onclick = ()=>{
+  if(!confirm('Clear ALL bookmarks? This cannot be undone.')) return;
+  if(bmActiveTab==='quran'){ qmStorageSet('qm_bookmarks','{}'); renderQuranBookmarks(); }
+  else { qmStorageSet('qm_hadith_bookmarks','{}'); renderHadithBookmarks(); }
+  updateBookmarkCount();
+};
+updateBookmarkCount();
+
+function renderResumeBanner(){
+  const el = document.getElementById('resumeBanner');
+  const last = getLastRead();
+  if (!last){ el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="resume-banner">
+      <div>Continue reading <b>${last.surahEnglishName}</b>, verse ${last.ayahNumberInSurah}</div>
+      <button class="primary" style="padding:7px 14px;">Resume →</button>
+    </div>`;
+  el.onclick = ()=> openSurah(last.surahNumber, last.ayahNumberInSurah);
+}
+
+async function loadSurahList(){
+  try{
+    const r = await fetch(`${QURAN_API}/surah`);
+    const j = await r.json();
+    surahList = j.data;
+    renderSurahGrid(surahList);
+    renderResumeBanner();
+  }catch(e){
+    document.getElementById('surahGrid').innerHTML = '<div class="small">Could not load surah list. Check your connection.</div>';
+  }
+}
+function renderSurahGrid(list){
+  const grid = document.getElementById('surahGrid');
+  if(!list.length){ grid.innerHTML = '<div class="small">No surah matches your search.</div>'; return; }
+  grid.innerHTML = list.map(s=>`
+    <div class="surah-card" data-n="${s.number}">
+      <span class="ar">${s.name}</span>
+      <span class="num">${s.number}</span>
+      <div class="en">${s.englishName}</div>
+      <div class="meta">${s.englishNameTranslation} · ${s.numberOfAyahs} ayahs · ${s.revelationType}</div>
+    </div>
+  `).join('');
+  grid.querySelectorAll('.surah-card').forEach(card=>{
+    card.onclick = ()=> openSurah(parseInt(card.dataset.n));
+  });
+}
+document.getElementById('surahSearch').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  if(!q){ renderSurahGrid(surahList); return; }
+  const filtered = surahList.filter(s =>
+    s.englishName.toLowerCase().includes(q) ||
+    s.englishNameTranslation.toLowerCase().includes(q) ||
+    String(s.number) === q ||
+    s.name.includes(q)
+  );
+  renderSurahGrid(filtered);
+});
+
+async function openSurah(number, scrollToAyah){
+  const wrap = document.getElementById('readerWrap');
+  const list = document.getElementById('ayahList');
+  wrap.style.display = 'block';
+  wrap.scrollIntoView({behavior:'smooth', block:'start'});
+  list.innerHTML = '<div class="reader-loading">Loading surah…</div>';
+  stopAudio();
+  currentSurahNumber = number;
+
+  const edition = langSelect.value;
+  try{
+    const [arRes, trRes] = await Promise.all([
+      fetch(`${QURAN_API}/surah/${number}/${ARABIC_EDITION}`),
+      fetch(`${QURAN_API}/surah/${number}/${edition}`)
+    ]);
+    const arJson = await arRes.json();
+    const trJson = await trRes.json();
+    const arData = arJson.data;
+    const trData = trJson.data;
+
+    document.getElementById('readerEyebrow').textContent = `Surah ${arData.number} · ${arData.revelationType}`;
+    document.getElementById('readerTitle').textContent = `${arData.englishName} — ${arData.name}`;
+
+    const BISMILLAH_DISPLAY = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
+    const BISMILLAH_WORD_COUNT = 4;
+    let bismillahHtml = '';
+    if (arData.number !== 9 && arData.number !== 1 && arData.ayahs.length) {
+      const firstAyah = arData.ayahs[0];
+      const words = firstAyah.text.trim().split(/\s+/);
+      if (words.length > BISMILLAH_WORD_COUNT) {
+        const remainder = words.slice(BISMILLAH_WORD_COUNT).join(' ');
+        arData.ayahs[0] = { ...firstAyah, text: remainder };
+        bismillahHtml = `<div class="bismillah-banner"><div class="ar">${BISMILLAH_DISPLAY}</div><div class="tr">In the name of Allah, the Most Gracious, the Most Merciful</div></div>`;
+      }
+    }
+
+    playQueue = arData.ayahs.map(a => ({ global: a.number, inSurah: a.numberInSurah }));
+
+    const rows = arData.ayahs.map((a, i)=>{
+      let tr = trData.ayahs[i] ? trData.ayahs[i].text : '';
+      if (i === 0 && bismillahHtml && tr) {
+        const knownBismillahPrefixes = [
+          'In the name of Allah, the Entirely Merciful, the Especially Merciful.',
+          'In the name of God, the Most Gracious, the Most Merciful.',
+          'In the Name of Allah, the Most Beneficent, the Most Merciful.',
+          'পরম করুণাময় ও অসীম দয়ালু আল্লাহর নামে।',
+          'अल्लाह के नाम से जो बड़ा कृपालु और दयावान है।',
+          'Bismi Allahi alrrahmani alrraheemi'
+        ];
+        for (const prefix of knownBismillahPrefixes) {
+          if (tr.startsWith(prefix)) { tr = tr.slice(prefix.length).trim(); break; }
+        }
+      }
+      const bookmarked = isBookmarked(arData.number, a.numberInSurah);
+      return `
+        <div class="ayah" data-global="${a.number}" data-insurah="${a.numberInSurah}" id="ayah-${a.numberInSurah}">
+          <div class="ayah-actions">
+            <button class="ayah-play" title="Play this verse">▶</button>
+            <button class="ayah-bookmark ${bookmarked?'active':''}" title="Bookmark this verse">${bookmarked?'★':'☆'}</button>
+          </div>
+          <div class="num-badge" style="float:right;">${a.numberInSurah}</div>
+          <div style="clear:both;"></div>
+          <div class="ar">${a.text}</div>
+          <div class="tr">${tr}</div>
+        </div>
+      `;
+    }).join('');
+    list.innerHTML = bismillahHtml + rows;
+
+    list.querySelectorAll('.ayah').forEach(ayahEl=>{
+      const global = parseInt(ayahEl.dataset.global);
+      const inSurah = parseInt(ayahEl.dataset.insurah);
+      ayahEl.querySelector('.ayah-play').onclick = ()=> playSingleAyah(global, ayahEl);
+      ayahEl.querySelector('.ayah-bookmark').onclick = (e)=>{
+        const ayahData = arData.ayahs.find(a=>a.numberInSurah===inSurah);
+        const trData2 = trJson.data.ayahs.find(a=>a.numberInSurah===inSurah);
+        toggleBookmark(arData.number, inSurah, {
+          surahName: arData.englishName,
+          arabicText: ayahData ? ayahData.text : '',
+          translationText: trData2 ? trData2.text : ''
+        });
+        const btn = e.currentTarget;
+        const nowBookmarked = isBookmarked(arData.number, inSurah);
+        btn.classList.toggle('active', nowBookmarked);
+        btn.textContent = nowBookmarked ? '★' : '☆';
+        ayahEl.classList.toggle('is-bookmarked', nowBookmarked);
+      };
+      if (isBookmarked(arData.number, inSurah)) ayahEl.classList.add('is-bookmarked');
+    });
+
+    setLastRead(arData.number, arData.englishName, scrollToAyah || 1);
+
+    if (scrollToAyah){
+      const target = document.getElementById(`ayah-${scrollToAyah}`);
+      if (target) setTimeout(()=> target.scrollIntoView({behavior:'smooth', block:'center'}), 150);
+    }
+  }catch(e){
+    list.innerHTML = '<div class="reader-loading">Could not load this surah. Please try again.</div>';
+  }
+}
+
+function stopAudio(){
+  if (currentAudio){ currentAudio.onended = null; currentAudio.pause(); currentAudio = null; }
+  if (currentPlayingAyahEl){ currentPlayingAyahEl.classList.remove('is-playing'); currentPlayingAyahEl = null; }
+  const playBtn = document.getElementById('playSurahBtn');
+  if (playBtn) playBtn.textContent = '▶ Play surah';
+}
+
+function playSingleAyah(globalAyahNumber, ayahEl){
+  stopAudio();
+  currentAudio = new Audio(AUDIO_CDN(globalAyahNumber));
+  currentPlayingAyahEl = ayahEl;
+  ayahEl.classList.add('is-playing');
+  currentAudio.play().catch(()=>{});
+  currentAudio.onended = ()=>{ ayahEl.classList.remove('is-playing'); currentPlayingAyahEl = null; currentAudio = null; };
+}
+
+function playSurahFrom(index){
+  if (index >= playQueue.length){ stopAudio(); return; }
+  const { global, inSurah } = playQueue[index];
+  const ayahEl = document.getElementById(`ayah-${inSurah}`);
+  if (currentAudio){ currentAudio.onended = null; currentAudio.pause(); currentAudio = null; }
+  if (currentPlayingAyahEl){ currentPlayingAyahEl.classList.remove('is-playing'); currentPlayingAyahEl = null; }
+
+  currentAudio = new Audio(AUDIO_CDN(global));
+  currentPlayingAyahEl = ayahEl;
+  if (ayahEl){
+    ayahEl.classList.add('is-playing');
+    ayahEl.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+  document.getElementById('playSurahBtn').textContent = '⏸ Stop';
+  currentAudio.play().catch(()=>{});
+  currentAudio.onended = ()=>{
+    if (ayahEl) ayahEl.classList.remove('is-playing');
+    playSurahFrom(index+1);
+  };
+}
+
+document.getElementById('playSurahBtn').onclick = ()=>{
+  const btn = document.getElementById('playSurahBtn');
+  if (currentAudio && btn.textContent.includes('Stop')){
+    stopAudio();
+  } else {
+    playSurahFrom(0);
+  }
+};
+document.getElementById('closeReader').onclick = ()=>{
+  stopAudio();
+  document.getElementById('readerWrap').style.display = 'none';
+  renderResumeBanner();
+};
+langSelect.addEventListener('change', ()=>{
+  if(document.getElementById('readerWrap').style.display === 'block' && currentSurahNumber){
+    openSurah(currentSurahNumber);
+  }
+});
+loadSurahList();
+
+/* ================= HADITH ================= */
+const HADITH_CDN = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions';
+
+const HADITH_COLLECTIONS = [
+  { id:'bukhari',  name:'Sahih al-Bukhari' },
+  { id:'muslim',   name:'Sahih Muslim' },
+  { id:'abudawud', name:'Sunan Abu Dawud' },
+  { id:'tirmidhi', name:'Jami At-Tirmidhi' },
+  { id:'nasai',    name:'Sunan an-Nasai' },
+  { id:'ibnmajah', name:'Sunan Ibn Majah' },
+  { id:'malik',    name:'Muwatta Malik' },
+  { id:'nawawi',   name: "Forty Hadith of an-Nawawi" },
+  { id:'qudsi',    name:'Forty Hadith Qudsi' },
+  { id:'dehlawi',  name: "Forty Hadith of Shah Waliullah Dehlawi" },
+];
+
+const HADITH_LANG_PREFIXES = [
+  { prefix:'eng', label:'English' },
+  { prefix:'ara', label:'Arabic' },
+  { prefix:'ben', label:'Bangla' },
+  { prefix:'urd', label:'Urdu' },
+  { prefix:'fra', label:'French' },
+  { prefix:'ind', label:'Indonesian' },
+  { prefix:'rus', label:'Russian' },
+  { prefix:'tur', label:'Turkish' },
+  { prefix:'tam', label:'Tamil' },
+];
+
+const HADITH_LANGS_BY_COLLECTION = {
+  bukhari:  ['eng','ara','ben','urd','fra','ind','rus','tam','tur'],
+  muslim:   ['eng','ara','ben','urd','fra','ind','rus','tam','tur'],
+  abudawud: ['eng','ara','ben','urd','fra','ind','rus','tur'],
+  tirmidhi: ['eng','ara','ben','urd','ind','tur'],
+  nasai:    ['eng','ara','ben','urd','fra','ind','tur'],
+  ibnmajah: ['eng','ara','ben','urd','fra','ind','tur'],
+  malik:    ['eng','ara','ben','urd','fra','ind','tur'],
+  nawawi:   ['eng','ara','ben','fra','tur'],
+  qudsi:    ['eng','ara','fra'],
+  dehlawi:  ['eng','ara','fra'],
+};
+
+const hadithCollectionSelect = document.getElementById('hadithCollectionSelect');
+const hadithLangSelect = document.getElementById('hadithLangSelect');
+HADITH_COLLECTIONS.forEach(c=>{
+  const opt = document.createElement('option');
+  opt.value = c.id; opt.textContent = c.name;
+  hadithCollectionSelect.appendChild(opt);
+});
+
+function refreshHadithLangOptions(){
+  const collectionId = hadithCollectionSelect.value;
+  const available = HADITH_LANGS_BY_COLLECTION[collectionId] || ['eng'];
+  hadithLangSelect.innerHTML = '';
+  HADITH_LANG_PREFIXES.filter(l => available.includes(l.prefix)).forEach(l=>{
+    const opt = document.createElement('option');
+    opt.value = l.prefix; opt.textContent = l.label;
+    hadithLangSelect.appendChild(opt);
+  });
+  hadithLangSelect.value = 'eng';
+}
+
+const HADITH_PAGE_SIZE = 20;
+let hadithCurrentPage = 0;
+let hadithCurrentList = [];
+
+async function loadHadithCollection(){
+  const collectionId = hadithCollectionSelect.value;
+  const lang = hadithLangSelect.value;
+  const edition = `${lang}-${collectionId}`;
+  const listEl = document.getElementById('hadithList');
+  const infoEl = document.getElementById('hadithCollectionInfo');
+  listEl.innerHTML = '<div class="reader-loading">Loading collection…</div>';
+  infoEl.textContent = '';
+
+  try{
+    const r = await fetch(`${HADITH_CDN}/${edition}.json`);
+    if (!r.ok) throw new Error('not found');
+    const data = await r.json();
+    const hadiths = Array.isArray(data.hadiths) ? data.hadiths : [];
+    if (!hadiths.length) throw new Error('empty');
+
+    hadithCurrentList = hadiths;
+    hadithCurrentPage = 0;
+
+    const collectionName = HADITH_COLLECTIONS.find(c=>c.id===collectionId)?.name || collectionId;
+    const total = (typeof data.metadata?.length === 'number' ? data.metadata.length : hadiths.length);
+    infoEl.textContent = `${collectionName} · ${total} hadith total`;
+
+    renderHadithPage();
+  }catch(e){
+    listEl.innerHTML = '<div class="reader-loading">Could not load this collection in the selected language. Try a different language.</div>';
+    document.getElementById('hadithPageInfo').textContent = '';
+  }
+}
+
+function renderHadithPage(){
+  const listEl = document.getElementById('hadithList');
+  const collectionId = hadithCollectionSelect.value;
+  const start = hadithCurrentPage * HADITH_PAGE_SIZE;
+  const pageItems = hadithCurrentList.slice(start, start + HADITH_PAGE_SIZE);
+
+  if (!pageItems.length){
+    listEl.innerHTML = '<div class="reader-loading">No hadiths on this page.</div>';
+    return;
+  }
+
+  listEl.innerHTML = pageItems.map(h=>{
+    const num = h.hadithnumber ?? h.hadithNumber ?? h.number ?? '';
+    const text = (h.text || h.body || h.hadith || '').toString().trim();
+    const grade = Array.isArray(h.grades) && h.grades.length ? h.grades[0].grade : null;
+    const bookmarked = isHadithBookmarked(collectionId, String(num));
+
+    if (!text) {
+      return `
+        <div class="ayah" data-num="${num}">
+          <div class="ayah-actions">
+            <button class="hadith-bookmark ${bookmarked?'active':''}" title="Bookmark this hadith">${bookmarked?'★':'☆'}</button>
+          </div>
+          <div class="num-badge" style="float:right;">${num}</div>
+          <div style="clear:both;"></div>
+          <div class="small" style="color:var(--muted);">No text available for this hadith.</div>
+        </div>`;
+    }
+    return `
+      <div class="ayah" data-num="${num}">
+        <div class="ayah-actions">
+          <button class="hadith-bookmark ${bookmarked?'active':''}" title="Bookmark this hadith">${bookmarked?'★':'☆'}</button>
+        </div>
+        <div class="num-badge" style="float:right;">${num}</div>
+        <div style="clear:both;"></div>
+        <div class="tr" style="font-size:15px;">${text}</div>
+        ${grade ? `<div class="small" style="margin-top:8px;color:var(--accent2);">${grade}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.hadith-bookmark').forEach(btn=>{
+    btn.onclick = (e)=>{
+      e.stopPropagation();
+      const ayahEl = btn.closest('.ayah');
+      const num = String(ayahEl.dataset.num);
+      const textEl = ayahEl.querySelector('.tr');
+      toggleHadithBookmark(collectionId, num, {
+        text: textEl ? textEl.textContent.slice(0,200) : ''
+      });
+      const nowBookmarked = isHadithBookmarked(collectionId, num);
+      btn.classList.toggle('active', nowBookmarked);
+      btn.textContent = nowBookmarked ? '★' : '☆';
+    };
+  });
+
+  const totalPages = Math.ceil(hadithCurrentList.length / HADITH_PAGE_SIZE);
+  document.getElementById('hadithPageInfo').textContent = `Page ${hadithCurrentPage+1} of ${totalPages}`;
+  listEl.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+hadithCollectionSelect.addEventListener('change', ()=>{
+  refreshHadithLangOptions();
+  loadHadithCollection();
+});
+hadithLangSelect.addEventListener('change', loadHadithCollection);
+
+document.getElementById('hadithPrevBtn').onclick = ()=>{
+  if (hadithCurrentPage > 0){ hadithCurrentPage--; renderHadithPage(); }
+};
+document.getElementById('hadithNextBtn').onclick = ()=>{
+  const totalPages = Math.ceil(hadithCurrentList.length / HADITH_PAGE_SIZE);
+  if (hadithCurrentPage < totalPages - 1){ hadithCurrentPage++; renderHadithPage(); }
+};
+document.getElementById('hadithJumpBtn').onclick = ()=>{
+  const n = parseInt(document.getElementById('hadithJumpInput').value);
+  if (!n || !hadithCurrentList.length) return;
+  const idx = hadithCurrentList.findIndex(h => (h.hadithnumber ?? h.hadithNumber ?? h.number) == n);
+  if (idx === -1) return;
+  hadithCurrentPage = Math.floor(idx / HADITH_PAGE_SIZE);
+  renderHadithPage();
+};
+
+refreshHadithLangOptions();
+loadHadithCollection();
+
+/* ================= Disable Right-Click ================= */
+document.addEventListener('contextmenu', e=>e.preventDefault());
+document.addEventListener('keydown', e=>{
+  if(e.ctrlKey && ['s','p'].includes(e.key.toLowerCase())) e.preventDefault();
+});
+</script>
+</body>
+</html>
