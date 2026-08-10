@@ -4,7 +4,9 @@ A simple and modern Islamic prayer timetable website designed to help students a
 
 ## Live Website
 
-https://20rajonadil.github.io/BMet-Prayer-web/Adil.Talha.html
+https://20rajonadil.github.io/BMet-Prayer-web/
+
+
 
 ## Features
 
