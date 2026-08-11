@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://20rajonadil.github.io/BMet-Prayer-web/sitemap.xml
