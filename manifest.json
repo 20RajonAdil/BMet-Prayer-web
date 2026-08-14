@@ -3,7 +3,7 @@
   "short_name": "BMet Prayer",
   "description": "Prayer times app for BMet College community with live updates, countdown, and location-based timings.",
   "id": "bmet-prayer-app",
-  "start_url": "/Adil.Talha.html",
+  "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
   "display_override": [
@@ -73,12 +73,12 @@
   "protocol_handlers": [
     {
       "protocol": "web+prayer",
-      "url": "/Adil.Talha.html?open=%s"
+      "url": "/index.html?open=%s"
     }
   ],
   "file_handlers": [
     {
-      "action": "/Adil.Talha.html",
+      "action": "/index.html",
       "accept": {
         "application/json": [
           ".json"
@@ -87,7 +87,7 @@
     }
   ],
   "share_target": {
-    "action": "/Adil.Talha.html?share",
+    "action": "/index.html?share",
     "method": "GET",
     "params": {
       "text": "text",
@@ -114,7 +114,7 @@
     "preferred_width": 400
   },
   "note_taking": {
-    "new_note_url": "/Adil.Talha.html?note=new",
+    "new_note_url": "/index.html?note=new",
     "open_at": "silo"
   },
   "scope_extensions": [
