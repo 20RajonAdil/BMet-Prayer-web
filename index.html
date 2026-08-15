@@ -98,23 +98,27 @@
 
     <!-- end of original content -->
 
-    <!-- Inserted script: normalize QASMI audio filenames to archive numeric names -->
+    <!-- Replaced script: correct QASMI audio filename normalizer -->
     <script>
     (function(){
       try {
-        // If the QASMI_AUDIO_FILES mapping exists, override entries to match archive numeric filenames (001.mp3 … 114.mp3)
         var totalSurahs = 114;
-        if (typeof QASMI_AUDIO_FILES !== 'undefined' && QASMI_AUDIO_FILES !== null) {
-          for (var i = 1; i <= totalSurahs; i++) {
-            QASMI_AUDIO_FILES[i] = String(i).padStart(3, '0') + '.mp3';
-          }
-        } else {
-          window.QASMI_AUDIO_FILES = {};
-          for (var j = 1; j <= totalSurahs; j++) {
-            window.QASMI_AUDIO_FILES[j] = String(j).padStart(3, '0') + '.mp3';
-          }
+        // Ensure base and mapping exist
+        window.QASMI_AUDIO_BASE = window.QASMI_AUDIO_BASE || 'https://archive.org/download/QuranByQariShakirQasmi/';
+        if (typeof window.QASMI_AUDIO_FILES === 'undefined' || window.QASMI_AUDIO_FILES === null) window.QASMI_AUDIO_FILES = {};
+        for (var i = 1; i <= totalSurahs; i++) {
+          window.QASMI_AUDIO_FILES[i] = String(i).padStart(3, '0') + '.mp3';
         }
-        // Expose helper if needed elsewhere
-        window.qasmiFileFor = function(surahNumber){
+        // Helper to get a full URL for a surah (optional)
+        window.qasmiFileFor = function(surahNumber) {
           var n = Number(surahNumber) || 1;
-          return '
+          return window.QASMI_AUDIO_BASE + String(n).padStart(3, '0') + '.mp3';
+        };
+      } catch (e) {
+        console.error('QASMI filename normalizer failed', e);
+      }
+    })();
+    </script>
+
+</body>
+</html>
