@@ -55,6 +55,8 @@
 
     <link rel="stylesheet" href="tailwind.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Lateef:wght@400;700&family=Reem+Kufi:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Harmattan:wght@400;700&family=Markazi+Text:wght@400;500;600;700&family=Cairo:wght@400;600;700&family=Rakkas&display=swap');
@@ -296,108 +298,58 @@
         }
         .bmet-nav-buttons button[onclick="openQiblaCompass()"]:hover { background: rgba(31,92,107,0.15); }
 
-        /* ---- Qibla Compass ----
-           Two systems, kept visually distinct on purpose:
-           1) The dial + fixed needle = the real compass (device heading).
-              The dial (cardinal letters, tick marks) rotates as the phone
-              turns; the needle stays fixed pointing "up the screen".
-           2) The small gold pin on the rim + dashed spoke = the Qibla
-              marker. It's fixed to the dial (so it turns with true North)
-              but is deliberately small and off-centre so it never reads as
-              "the" compass needle. */
-        .qibla-stage {
-            perspective: 900px;
-            width: 260px; height: 260px; margin: 0 auto;
+        /* ---- Qibla Finder (map-based) ----
+           A Leaflet map centred on the user, the Kaaba, and the great-circle
+           line between them. The map is always north-up by definition, so a
+           small static orientation rose in the corner is enough — nothing
+           here depends on a device compass sensor. */
+        .qibla-map-wrap {
+            border-radius: 18px; overflow: hidden; border: 1px solid #DDD6BF;
+            box-shadow: 0 14px 30px -18px rgba(22,35,29,0.4);
         }
-        .qibla-top-tick {
-            position: absolute; left: 50%; top: -6px; transform: translateX(-50%);
-            width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent;
-            border-top: 11px solid #16231D; z-index: 8;
-        }
-        .qibla-housing {
-            width: 100%; height: 100%; border-radius: 50%; position: relative;
-            background: radial-gradient(circle at 32% 28%, #FFFFFF, #EFEAD8 55%, #DDD6BF 100%);
-            box-shadow:
-                0 30px 45px -20px rgba(22,35,29,0.45),
-                0 2px 0 rgba(255,255,255,0.6) inset,
-                0 -10px 18px -6px rgba(22,35,29,0.15) inset;
-            transform: rotateX(8deg);
-            transform-style: preserve-3d;
-            border: 1px solid rgba(221,214,191,0.9);
-        }
-        .qibla-housing::before {
-            content: ""; position: absolute; inset: 10px; border-radius: 50%;
-            background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.9), rgba(243,241,230,0.2) 60%);
-            box-shadow: 0 10px 20px -10px rgba(22,35,29,0.35) inset, 0 -4px 10px -4px rgba(255,255,255,0.7) inset;
-            pointer-events: none;
-        }
-        .qibla-dial {
-            position: absolute; inset: 18px; border-radius: 50%;
-            transition: transform 0.15s ease-out;
-            transform: rotate(0deg);
-            background: repeating-conic-gradient(from 0deg, rgba(75,93,83,0.10) 0deg 1.5deg, transparent 1.5deg 15deg);
-            border: 1px solid rgba(75,93,83,0.18);
-        }
-        .qibla-cardinal {
-            position: absolute; width: 22px; margin-left: -11px; margin-top: -8px;
-            text-align: center; font-family: 'Space Grotesk', sans-serif;
-            font-weight: 700; font-size: 12px; color: #4B5D53;
-        }
-        .qibla-cardinal.qc-inter { font-size: 10px; font-weight: 600; color: #7C8B81; }
-        .qibla-cardinal.qc-north { color: #B8622E; font-size: 14px; }
+        #qibla-map { width: 100%; height: 280px; background: #EFEAD8; }
+        .qibla-map-wrap .leaflet-control-attribution { font-size: 9px; }
 
-        /* Qibla rim marker + spoke — deliberately small, off to the side, never centred */
-        .qibla-spoke {
-            position: absolute; left: 50%; top: 50%; width: 1.5px; height: 34%;
-            transform-origin: 50% 100%;
-            background: repeating-linear-gradient(180deg, #A9812E 0 4px, transparent 4px 8px);
-            opacity: 0.85;
+        /* Static orientation rose — fixed in a map corner via a Leaflet control */
+        .qibla-orient-rose {
+            width: 68px; height: 68px; position: relative;
+            background: radial-gradient(circle at 35% 30%, #FFFFFF, #F3F1E6 70%);
+            border-radius: 50%; border: 1px solid rgba(75,93,83,0.25);
+            box-shadow: 0 6px 14px -6px rgba(22,35,29,0.4);
         }
-        .qibla-pin {
-            position: absolute; left: 50%; top: 50%; width: 20px; height: 20px;
-            margin-left: -10px; margin-top: -10px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 7px; background: linear-gradient(160deg, #16231D, #000);
-            border: 1.5px solid #A9812E; color: #D9B75C; font-size: 10px;
+        .qibla-orient-rose span {
+            position: absolute; left: 50%; top: 50%; width: 16px; margin-left: -8px; margin-top: -6px;
+            text-align: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+            font-size: 9px; color: #4B5D53;
+        }
+        .qibla-orient-rose span.qr-n { color: #B8622E; font-size: 10px; }
+        .qibla-orient-rose::before {
+            content: ""; position: absolute; left: 50%; top: 6px; width: 0; height: 0;
+            border-left: 4px solid transparent; border-right: 4px solid transparent;
+            border-bottom: 7px solid #B8622E; transform: translateX(-50%);
+        }
+
+        /* Custom markers */
+        .qibla-user-dot {
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #1F5C6B; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(22,35,29,0.5);
+        }
+        .qibla-kaaba-icon {
+            width: 26px; height: 26px; border-radius: 8px;
+            background: linear-gradient(160deg, #16231D, #000); border: 2px solid #A9812E;
+            display: flex; align-items: center; justify-content: center; color: #D9B75C; font-size: 12px;
             box-shadow: 0 4px 10px -3px rgba(22,35,29,0.5);
         }
 
-        /* Fixed compass needle — sibling of the dial, never rotates */
-        .qibla-needle-fixed {
-            position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 4;
-        }
-        .qibla-needle-north {
-            position: absolute; left: -3.5px; top: -70px; width: 7px; height: 70px;
-            background: linear-gradient(180deg, #C0392B, #8f2a20);
-            clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-        }
-        .qibla-needle-south {
-            position: absolute; left: -3.5px; top: 0; width: 7px; height: 58px;
-            background: linear-gradient(180deg, #4B5D53, #2c3a33);
-            clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
-        }
-        .qibla-hub {
-            position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; border-radius: 50%;
-            transform: translate(-50%, -50%);
-            background: radial-gradient(circle at 35% 30%, #F1E7CC, #A9812E 70%);
-            box-shadow: 0 3px 8px -2px rgba(22,35,29,0.5);
-            z-index: 5;
-        }
-        .qibla-aligned .qibla-housing { box-shadow: 0 0 0 4px rgba(169,129,46,0.4), 0 30px 45px -20px rgba(22,35,29,0.45); }
-
         .qibla-info-block { margin-top: 14px; padding: 12px 14px; border-radius: 16px; border: 1px solid #DDD6BF; }
-        .qibla-info-compass { background: #F3F1E6; }
         .qibla-info-qibla { background: #F1E7CC; border-color: rgba(169,129,46,0.3); }
         .qibla-info-label { font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; color: #4B5D53; }
         .qibla-info-main { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; color: #16231D; margin-top: 2px; }
         .qibla-info-sub { font-size: 11px; color: #4B5D53; margin-top: 2px; }
-        .qibla-turn-hint {
-            margin-top: 10px; text-align: center; font-size: 12px; font-weight: 600; color: #1F5C6B;
-            background: #E2EEEF; border-radius: 999px; padding: 6px 10px;
-        }
         .qibla-location-line { margin-top: 10px; font-size: 11px; color: #4B5D53; text-align: center; }
-        .qibla-enable-btn { background: #1F5C6B; color: #F3F1E6; }
-        .qibla-enable-btn:hover { background: #26707F; }
+        .qibla-accuracy-note {
+            margin-top: 6px; font-size: 10.5px; color: #B8622E; text-align: center; line-height: 1.4;
+        }
         #qibla-search-results button { width: 100%; text-align: left; }
         .qibla-search-result-btn {
             display: block; width: 100%; text-align: left; padding: 8px 12px; border-radius: 12px;
@@ -848,12 +800,12 @@
         </div>
     </div>
 
-    <!-- Qibla Compass Modal -->
+    <!-- Qibla Finder Modal -->
     <div id="qibla-modal" onclick="if (event.target.id === 'qibla-modal') closeQiblaCompass()" class="hidden fixed inset-0 bg-ink/60 z-[100] flex items-center justify-center p-4">
-        <div onclick="event.stopImmediatePropagation()" class="modal bg-white border border-line rounded-3xl w-full p-6 sm:p-7" style="max-width:26rem; max-height:92vh; overflow-y:auto;">
+        <div onclick="event.stopImmediatePropagation()" class="modal bg-white border border-line rounded-3xl w-full p-6 sm:p-7" style="max-width:28rem; max-height:92vh; overflow-y:auto;">
             <div class="flex justify-between items-center mb-4">
                 <div>
-                    <div class="font-display font-bold text-xl">Qibla Compass</div>
+                    <div class="font-display font-bold text-xl">Qibla Finder</div>
                     <div class="text-teal text-xs" id="qibla-subtitle">Finding your location…</div>
                 </div>
                 <button onclick="closeQiblaCompass()" class="text-3xl leading-none text-inksoft hover:text-ink">&times;</button>
@@ -864,32 +816,14 @@
             </div>
 
             <div id="qibla-content" class="hidden">
-                <!-- The live compass: shows where the DEVICE is pointing. This is
-                     the only thing that rotates with the phone. -->
-                <div class="qibla-stage" id="qibla-stage">
-                    <div class="qibla-top-tick"></div>
-                    <div class="qibla-housing">
-                        <div class="qibla-dial" id="qibla-dial">
-                            <!-- 8-point cardinal labels + Qibla rim marker are injected by JS -->
-                        </div>
-                        <!-- Fixed compass needle: always points "up" (the direction
-                             the top of the phone is facing). Does NOT rotate. -->
-                        <div class="qibla-needle-fixed">
-                            <div class="qibla-needle-north"></div>
-                            <div class="qibla-needle-south"></div>
-                        </div>
-                        <div class="qibla-hub"></div>
-                    </div>
+                <!-- Map: your location, the Kaaba, and the great-circle line
+                     between them. North is always up, so a small fixed
+                     orientation rose in the corner is all that's needed —
+                     no device sensors involved anywhere here. -->
+                <div class="qibla-map-wrap">
+                    <div id="qibla-map"></div>
                 </div>
 
-                <!-- Compass system: current device heading -->
-                <div class="qibla-info-block qibla-info-compass">
-                    <div class="qibla-info-label"><i class="fa-solid fa-mobile-screen-button"></i> Your device is facing</div>
-                    <div class="qibla-info-main" id="compass-heading-text">—</div>
-                    <div class="qibla-info-sub" id="compass-heading-sub">Waiting for compass sensor…</div>
-                </div>
-
-                <!-- Qibla system: calculated direction to the Kaaba, entirely separate -->
                 <div class="qibla-info-block qibla-info-qibla">
                     <div class="qibla-info-label"><i class="fa-solid fa-kaaba"></i> Qibla direction</div>
                     <div class="qibla-info-main" id="qibla-sentence">—</div>
@@ -897,27 +831,8 @@
                     <div class="qibla-info-sub" id="qibla-distance-text">—</div>
                 </div>
 
-                <div id="qibla-turn-hint" class="hidden qibla-turn-hint">
-                    <i class="fa-solid fa-arrow-rotate-right"></i> <span id="qibla-turn-hint-text"></span>
-                </div>
-
                 <div class="qibla-location-line" id="qibla-location-line">Location: —</div>
-
-                <div id="qibla-compass-enable-row" class="mt-3 text-center">
-                    <button onclick="enableQiblaCompassSensor()" id="qibla-enable-btn"
-                            class="px-5 py-2.5 rounded-full text-sm font-medium transition-colors qibla-enable-btn">
-                        <i class="fa-solid fa-compass mr-2"></i>Enable Live Compass
-                    </button>
-                </div>
-                <div id="qibla-no-sensor-hint" class="hidden mt-3 text-center text-[11px] text-inksoft/70 leading-relaxed">
-                    <i class="fa-solid fa-circle-info mr-1"></i>
-                    Your device or browser doesn't support a live compass, so a rotating needle can't be shown. The Qibla
-                    bearing above is still calculated correctly from your location — face that direction using a separate compass or map app.
-                </div>
-                <p id="qibla-calibrate-hint" class="hidden text-[11px] text-inksoft/70 mt-2 text-center leading-relaxed">
-                    Move your phone in a slow figure-8 to calibrate, and keep it away from magnets, speakers, or metal objects.
-                    Phone compasses read magnetic north, which can differ slightly from true north — trust the printed bearing above if the two disagree.
-                </p>
+                <div id="qibla-accuracy-note" class="hidden qibla-accuracy-note"></div>
 
                 <div class="text-center mt-3">
                     <button onclick="showManualLocationSearch()" class="text-xs text-teal underline" style="text-underline-offset:2px;">
@@ -945,7 +860,7 @@
             </div>
 
             <div id="qibla-error" class="hidden py-8 text-center text-clay text-sm">
-                <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>
+                <i class="fa-solid fa-triangle-exclamation mr-2"></i>
                 <span id="qibla-error-text">Could not get your location.</span>
                 <div class="mt-3">
                     <button onclick="showManualLocationSearch()" class="px-5 py-2 rounded-full bg-white border border-line text-sm font-medium hover:bg-paper2 transition-colors">
@@ -1737,31 +1652,25 @@
         }
 
         /* =====================================================================
-           QIBLA COMPASS
-           Two independent systems, kept deliberately separate:
-             - The COMPASS reads the device's own motion sensors to show which
-               way the phone is physically facing (magnetic heading).
-             - The QIBLA calculation is pure spherical geometry from the
-               user's coordinates to the Kaaba — it never depends on the
-               compass sensor, and is correct even on a device with no
-               compass at all.
+           QIBLA FINDER (map-based)
+           A Leaflet map (OpenStreetMap tiles, no API key) centred on the
+           user's location, with a marker for the Kaaba and a great-circle
+           line between them — the geographically correct path, not just a
+           straight line on the flat map. North is always up on the map by
+           definition, so there's no device-sensor compass here at all: no
+           heading drift, no calibration, nothing that can misbehave.
            Location is found via: GPS/browser geolocation (best) -> IP-based
            estimate (fallback, clearly labelled) -> manual place search
-           (last resort, or any time the user wants to change it). The Qibla
-           maths and the live compass both then run entirely offline.
+           (last resort, or any time the user wants to change it).
            ========================================================================= */
         const KAABA_LAT = 21.4225;
         const KAABA_LON = 39.8262;
 
         let qiblaBearing = null;        // true-north bearing to the Kaaba at the user's location
         let qiblaDistanceKm = null;
-        let qiblaDeviceHeading = null;  // last known device compass heading (magnetic), or null if no reading yet
-        let qiblaSensorActive = false;
-        let qiblaSensorConfirmed = false; // a real reading has actually arrived
-        let qiblaOrientationHandler = null;
-        let qiblaSensorTimeoutId = null;
         let qiblaLocationSource = null; // 'gps' | 'ip' | 'manual'
         let qiblaLocationLabel = '';
+        let qiblaMapInstance = null;
 
         function toRad(deg) { return deg * Math.PI / 180; }
         function toDeg(rad) { return rad * 180 / Math.PI; }
@@ -1783,6 +1692,33 @@
             const Δλ = toRad(lon2 - lon1);
             const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        // Points along the great-circle path from (lat1,lon1) to (lat2,lon2),
+        // via spherical interpolation (slerp). This is the geographically
+        // correct shortest path — it renders as a gentle curve on the map for
+        // long distances, which is genuinely more accurate than a straight
+        // pixel line between the two points would be.
+        function greatCirclePoints(lat1, lon1, lat2, lon2, segments) {
+            const φ1 = toRad(lat1), λ1 = toRad(lon1);
+            const φ2 = toRad(lat2), λ2 = toRad(lon2);
+            const d = 2 * Math.asin(Math.sqrt(
+                Math.sin((φ2 - φ1) / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin((λ2 - λ1) / 2) ** 2
+            ));
+            if (d === 0) return [[lat1, lon1], [lat2, lon2]];
+            const points = [];
+            for (let i = 0; i <= segments; i++) {
+                const f = i / segments;
+                const a = Math.sin((1 - f) * d) / Math.sin(d);
+                const b = Math.sin(f * d) / Math.sin(d);
+                const x = a * Math.cos(φ1) * Math.cos(λ1) + b * Math.cos(φ2) * Math.cos(λ2);
+                const y = a * Math.cos(φ1) * Math.sin(λ1) + b * Math.cos(φ2) * Math.sin(λ2);
+                const z = a * Math.sin(φ1) + b * Math.sin(φ2);
+                const φi = Math.atan2(z, Math.sqrt(x * x + y * y));
+                const λi = Math.atan2(y, x);
+                points.push([toDeg(φi), toDeg(λi)]);
+            }
+            return points;
         }
 
         const COMPASS_POINTS_16 = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
@@ -1821,7 +1757,7 @@
                     currentCoords = { lat: position.coords.latitude, lon: position.coords.longitude };
                     qiblaLocationSource = 'gps';
                     qiblaLocationLabel = 'Location detected using your device';
-                    setupQiblaForLocation(currentCoords.lat, currentCoords.lon);
+                    setupQiblaForLocation(currentCoords.lat, currentCoords.lon, position.coords.accuracy);
                 },
                 (error) => {
                     let reason = "Could not get your device location.";
@@ -1844,8 +1780,8 @@
                 }
                 const place = [data.city, data.country_name].filter(Boolean).join(', ');
                 qiblaLocationSource = 'ip';
-                qiblaLocationLabel = `Location estimated from your IP address${place ? ' — ' + place : ''} (less accurate than GPS)`;
-                setupQiblaForLocation(data.latitude, data.longitude);
+                qiblaLocationLabel = `Location estimated from your IP address${place ? ' — ' + place : ''}`;
+                setupQiblaForLocation(data.latitude, data.longitude, null);
             } catch (e) {
                 showQiblaError(reasonGpsFailed + " We couldn't estimate it from your IP address either.");
             }
@@ -1860,7 +1796,9 @@
             document.getElementById('qibla-subtitle').textContent = 'Location needed';
         }
 
-        function setupQiblaForLocation(lat, lon) {
+        // accuracyMeters is the GPS accuracy radius when source is 'gps', or
+        // null for IP/manual locations where no meaningful radius exists.
+        function setupQiblaForLocation(lat, lon, accuracyMeters) {
             qiblaBearing = calculateBearing(lat, lon, KAABA_LAT, KAABA_LON);
             qiblaDistanceKm = calculateDistanceKm(lat, lon, KAABA_LAT, KAABA_LON);
 
@@ -1872,61 +1810,9 @@
                 qiblaLocationSource === 'gps' ? 'Using your device location' :
                 qiblaLocationSource === 'ip' ? 'Using an estimated location' : 'Using your selected location';
 
-            buildQiblaDial();
             renderQiblaInfo();
-            renderCompassHeadingText();
-
-            // Detect whether a live compass is even worth offering, without
-            // pretending support that isn't there.
-            const hasOrientationAPI = (typeof DeviceOrientationEvent !== 'undefined');
-            document.getElementById('qibla-compass-enable-row').classList.toggle('hidden', !hasOrientationAPI || qiblaSensorActive);
-            document.getElementById('qibla-no-sensor-hint').classList.toggle('hidden', hasOrientationAPI);
-            document.getElementById('qibla-calibrate-hint').classList.toggle('hidden', !hasOrientationAPI);
-
-            if (qiblaSensorActive) updateQiblaDialRotation();
-        }
-
-        // Builds the 8-point cardinal ring and the Qibla rim marker. Cardinal
-        // letters are positioned with translate() only (never rotate()) so the
-        // glyphs themselves always stay upright — only their position moves
-        // when the parent dial rotates with the device heading.
-        function buildQiblaDial() {
-            const dial = document.getElementById('qibla-dial');
-            if (!dial || qiblaBearing === null) return;
-            dial.innerHTML = '';
-
-            const labelRadius = 100;
-            for (let i = 0; i < 8; i++) {
-                const angle = i * 45;
-                const rad = toRad(angle);
-                const x = labelRadius * Math.sin(rad);
-                const y = -labelRadius * Math.cos(rad);
-                const el = document.createElement('div');
-                el.className = 'qibla-cardinal' + (angle === 0 ? ' qc-north' : (angle % 90 !== 0 ? ' qc-inter' : ''));
-                el.style.left = '50%';
-                el.style.top = '50%';
-                el.style.transform = `translate(${x}px, ${y}px)`;
-                el.textContent = COMPASS_POINTS_16[i * 2];
-                dial.appendChild(el);
-            }
-
-            // Qibla marker: a small spoke + pin fixed to the dial at the qibla
-            // bearing. It rotates together with the dial (since it's a normal
-            // child element) but is visually separate from the needle.
-            const spoke = document.createElement('div');
-            spoke.className = 'qibla-spoke';
-            spoke.style.transform = `translate(-50%, -100%) rotate(${qiblaBearing}deg)`;
-            dial.appendChild(spoke);
-
-            const pinRadius = 90;
-            const pinRad = toRad(qiblaBearing);
-            const px = pinRadius * Math.sin(pinRad);
-            const py = -pinRadius * Math.cos(pinRad);
-            const pin = document.createElement('div');
-            pin.className = 'qibla-pin';
-            pin.style.transform = `translate(${px}px, ${py}px)`;
-            pin.innerHTML = '<i class="fa-solid fa-kaaba"></i>';
-            dial.appendChild(pin);
+            renderQiblaAccuracyNote(accuracyMeters);
+            renderQiblaMap(lat, lon, accuracyMeters);
         }
 
         function renderQiblaInfo() {
@@ -1941,142 +1827,112 @@
             document.getElementById('qibla-location-line').textContent = qiblaLocationLabel || 'Location: —';
         }
 
-        function renderCompassHeadingText() {
-            const mainEl = document.getElementById('compass-heading-text');
-            const subEl = document.getElementById('compass-heading-sub');
-            if (qiblaSensorConfirmed && qiblaDeviceHeading !== null) {
-                const point = compassPointFromBearing(qiblaDeviceHeading);
-                mainEl.textContent = `${Math.round(qiblaDeviceHeading)}° ${point}`;
-                subEl.textContent = 'Live reading from your device\'s compass sensor (magnetic north)';
-            } else if (qiblaSensorActive) {
-                mainEl.textContent = '—';
-                subEl.textContent = 'Waiting for a compass reading…';
+        function renderQiblaAccuracyNote(accuracyMeters) {
+            const el = document.getElementById('qibla-accuracy-note');
+            if (!el) return;
+            if (qiblaLocationSource === 'gps' && typeof accuracyMeters === 'number' && !isNaN(accuracyMeters)) {
+                if (accuracyMeters > 1000) {
+                    el.textContent = `Your GPS fix is only accurate to about ${Math.round(accuracyMeters / 1000)} km right now — move outdoors or wait a moment for a better signal if you need precision.`;
+                    el.classList.remove('hidden');
+                } else if (accuracyMeters > 100) {
+                    el.textContent = `Accurate to about ${Math.round(accuracyMeters)} m.`;
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            } else if (qiblaLocationSource === 'ip') {
+                el.textContent = 'IP-based location is approximate and can be off by several kilometres or more — allow GPS access or search for your exact place for a precise result.';
+                el.classList.remove('hidden');
             } else {
-                mainEl.textContent = '—';
-                subEl.textContent = 'Live compass is off — tap "Enable Live Compass" below';
+                el.classList.add('hidden');
             }
         }
 
-        function enableQiblaCompassSensor() {
-            const btn = document.getElementById('qibla-enable-btn');
-            if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+        function renderQiblaMap(lat, lon, accuracyMeters) {
+            const mapEl = document.getElementById('qibla-map');
+            if (!mapEl) return;
 
-            if (typeof DeviceOrientationEvent !== 'undefined' &&
-                typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // iOS 13+ requires an explicit, in-gesture permission prompt.
-                DeviceOrientationEvent.requestPermission().then((state) => {
-                    if (state === 'granted') {
-                        startQiblaSensor();
-                    } else {
-                        showToast("Compass permission denied — use the printed bearing instead.");
-                        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
-                    }
-                }).catch(() => {
-                    showToast("Couldn't access the compass sensor on this device.");
-                    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
-                });
+            if (typeof L === 'undefined') {
+                mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#4B5D53;font-size:12px;padding:12px;text-align:center;">Map failed to load — check your connection and reopen the Qibla Finder.</div>';
                 return;
             }
 
-            startQiblaSensor();
-        }
+            // A fresh map instance each time keeps this simple and avoids
+            // Leaflet's "container already initialised" error when the user
+            // switches location.
+            if (qiblaMapInstance) {
+                qiblaMapInstance.remove();
+                qiblaMapInstance = null;
+            }
+            mapEl.innerHTML = '';
 
-        function startQiblaSensor() {
-            if (qiblaSensorActive) return;
-            qiblaSensorActive = true;
-            qiblaSensorConfirmed = false;
-            renderCompassHeadingText();
+            const map = L.map(mapEl, { attributionControl: true, zoomControl: true });
+            qiblaMapInstance = map;
 
-            qiblaOrientationHandler = (event) => {
-                let heading = null;
-                if (typeof event.webkitCompassHeading === 'number' && !isNaN(event.webkitCompassHeading)) {
-                    // iOS Safari: already a compass heading, clockwise from North.
-                    heading = event.webkitCompassHeading;
-                } else if (event.alpha !== null && event.alpha !== undefined && event.absolute) {
-                    // Android absolute orientation: alpha is counter-clockwise from North.
-                    heading = (360 - event.alpha) % 360;
-                } else if (event.alpha !== null && event.alpha !== undefined && !('ondeviceorientationabsolute' in window)) {
-                    // Last-resort: relative orientation only (no absolute event available).
-                    // Less reliable, but better than nothing, and still labelled honestly below.
-                    heading = (360 - event.alpha) % 360;
-                }
-                if (heading === null || isNaN(heading)) return;
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+            }).addTo(map);
 
-                if (!qiblaSensorConfirmed) {
-                    qiblaSensorConfirmed = true;
-                    if (qiblaSensorTimeoutId) { clearTimeout(qiblaSensorTimeoutId); qiblaSensorTimeoutId = null; }
-                    document.getElementById('qibla-compass-enable-row').classList.add('hidden');
-                }
-                qiblaDeviceHeading = heading;
-                updateQiblaDialRotation();
-                renderCompassHeadingText();
-            };
+            const userIcon = L.divIcon({ className: '', html: '<div class="qibla-user-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
+            const kaabaIcon = L.divIcon({ className: '', html: '<div class="qibla-kaaba-icon"><i class="fa-solid fa-kaaba"></i></div>', iconSize: [26, 26], iconAnchor: [13, 13] });
 
-            if ('ondeviceorientationabsolute' in window) {
-                window.addEventListener('deviceorientationabsolute', qiblaOrientationHandler, true);
-            } else {
-                window.addEventListener('deviceorientation', qiblaOrientationHandler, true);
+            const userMarker = L.marker([lat, lon], { icon: userIcon, title: 'Your location' }).addTo(map);
+            L.marker([KAABA_LAT, KAABA_LON], { icon: kaabaIcon, title: 'The Kaaba, Makkah' }).addTo(map);
+
+            if (qiblaLocationSource === 'gps' && typeof accuracyMeters === 'number' && !isNaN(accuracyMeters) && accuracyMeters > 30) {
+                L.circle([lat, lon], { radius: accuracyMeters, color: '#1F5C6B', weight: 1, fillColor: '#1F5C6B', fillOpacity: 0.08 }).addTo(map);
             }
 
-            // If no real reading arrives within a few seconds, this device/browser
-            // doesn't actually support a live compass — say so plainly instead of
-            // leaving a needle frozen at 0.
-            qiblaSensorTimeoutId = setTimeout(() => {
-                if (!qiblaSensorConfirmed) {
-                    stopQiblaSensor();
-                    document.getElementById('qibla-compass-enable-row').classList.add('hidden');
-                    document.getElementById('qibla-no-sensor-hint').classList.remove('hidden');
-                    document.getElementById('qibla-calibrate-hint').classList.add('hidden');
-                    renderCompassHeadingText();
+            const linePoints = greatCirclePoints(lat, lon, KAABA_LAT, KAABA_LON, 64);
+            const line = L.polyline(linePoints, { color: '#A9812E', weight: 3, dashArray: '1,8', lineCap: 'round' }).addTo(map);
+
+            // Static orientation rose, fixed in a map corner. Purely a visual
+            // reference that the map is north-up — it never rotates and
+            // doesn't depend on any device sensor.
+            const RoseControl = L.Control.extend({
+                options: { position: 'topright' },
+                onAdd: function () {
+                    const div = L.DomUtil.create('div', 'qibla-orient-rose');
+                    const labelRadius = 24;
+                    COMPASS_POINTS_16.filter((_, i) => i % 2 === 0).forEach((label, i) => {
+                        const angle = i * 45;
+                        const rad = toRad(angle);
+                        const x = labelRadius * Math.sin(rad);
+                        const y = -labelRadius * Math.cos(rad);
+                        const span = document.createElement('span');
+                        span.className = angle === 0 ? 'qr-n' : '';
+                        span.style.transform = `translate(${x}px, ${y}px)`;
+                        span.textContent = label;
+                        div.appendChild(span);
+                    });
+                    L.DomEvent.disableClickPropagation(div);
+                    return div;
                 }
-            }, 3000);
-        }
+            });
+            map.addControl(new RoseControl());
 
-        function updateQiblaDialRotation() {
-            if (qiblaBearing === null || qiblaDeviceHeading === null) return;
-            const dial = document.getElementById('qibla-dial');
-            if (!dial) return;
-            // Rotate the dial opposite to the device heading, so the cardinal
-            // letters (and the Qibla marker fixed to the dial) line up with
-            // true directions relative to which way the phone is pointing.
-            dial.style.transform = `rotate(${-qiblaDeviceHeading}deg)`;
+            map.fitBounds(line.getBounds(), { padding: [28, 28] });
 
-            const relative = ((qiblaBearing - qiblaDeviceHeading) % 360 + 360) % 360;
-            const stage = document.getElementById('qibla-stage');
-            const aligned = relative < 4 || relative > 356;
-            if (stage) stage.classList.toggle('qibla-aligned', aligned);
-
-            const turnHint = document.getElementById('qibla-turn-hint');
-            const turnHintText = document.getElementById('qibla-turn-hint-text');
-            if (aligned) {
-                turnHint.classList.remove('hidden');
-                turnHintText.textContent = "You're facing the Qibla";
-            } else if (turnHint) {
-                const turnRight = relative > 0 && relative <= 180;
-                turnHint.classList.remove('hidden');
-                turnHintText.textContent = `Turn ${turnRight ? 'right' : 'left'} ${Math.round(Math.min(relative, 360 - relative))}° to face the Qibla`;
-            }
-        }
-
-        function stopQiblaSensor() {
-            if (qiblaSensorTimeoutId) { clearTimeout(qiblaSensorTimeoutId); qiblaSensorTimeoutId = null; }
-            if (!qiblaSensorActive) return;
-            if (qiblaOrientationHandler) {
-                window.removeEventListener('deviceorientationabsolute', qiblaOrientationHandler, true);
-                window.removeEventListener('deviceorientation', qiblaOrientationHandler, true);
-            }
-            qiblaSensorActive = false;
-            qiblaSensorConfirmed = false;
-            qiblaOrientationHandler = null;
-            const turnHint = document.getElementById('qibla-turn-hint');
-            if (turnHint) turnHint.classList.add('hidden');
+            // A one-off gentle zoom-in on the user's own marker after the
+            // overview renders, so they can see exactly where they are —
+            // without losing the "this is the direction to Makkah" context,
+            // which stays visible via the line.
+            window.setTimeout(() => {
+                if (qiblaMapInstance === map) {
+                    map.setView([lat, lon], Math.max(map.getZoom(), 5), { animate: true });
+                }
+            }, 900);
         }
 
         function closeQiblaCompass() {
             const modal = document.getElementById('qibla-modal');
             modal.classList.remove('flex');
             modal.classList.add('hidden');
-            stopQiblaSensor();
+            if (qiblaMapInstance) {
+                qiblaMapInstance.remove();
+                qiblaMapInstance = null;
+            }
         }
 
         /* ---- Manual location search (OpenStreetMap Nominatim) ----
