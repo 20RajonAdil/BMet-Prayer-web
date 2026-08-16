@@ -71,6 +71,54 @@
         }
         .font-display { font-family: 'Space Grotesk', sans-serif; }
 
+        html { scroll-behavior: smooth; }
+        #prayer-times, #events-section, #jumuah-card, #announcements-card { scroll-margin-top: 96px; }
+
+        /* ---- Tactile interactions: every pill button/link gets a subtle
+           hover lift and a satisfying press-down, site-wide, so nothing
+           feels like a static/dead click target. ---- */
+        button.rounded-full, a.rounded-full, .app-download-btn, .qibla-search-result-btn,
+        button.rounded-2xl, a.rounded-2xl, button.rounded-3xl {
+            transition: transform 0.18s cubic-bezier(0.4,0,0.2,1), box-shadow 0.18s ease,
+                        background-color 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+        }
+        button.rounded-full:hover, a.rounded-full:hover, .app-download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 22px -14px rgba(22,35,29,0.35);
+        }
+        button.rounded-full:active, a.rounded-full:active, .app-download-btn:active,
+        .qibla-search-result-btn:active {
+            transform: scale(0.96);
+            box-shadow: none;
+        }
+        .qibla-search-result-btn:hover { transform: translateY(-1px); }
+
+        /* Sticky nav gains depth once the page scrolls under it */
+        nav.site-nav { transition: box-shadow 0.25s ease, background-color 0.25s ease; }
+        nav.site-nav.nav-scrolled { box-shadow: 0 8px 24px -16px rgba(22,35,29,0.35); }
+
+        /* Gentle ambient drift on the hero's decorative stars */
+        .hero-stars svg { animation: starDrift 22s ease-in-out infinite; transform-origin: center; }
+        .hero-stars svg:nth-child(2) { animation-duration: 26s; animation-delay: -4s; }
+        .hero-stars svg:nth-child(3) { animation-duration: 30s; animation-delay: -11s; }
+        .hero-stars svg:nth-child(4) { animation-duration: 18s; animation-delay: -7s; }
+        @keyframes starDrift {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(8deg) scale(1.06); }
+        }
+
+        /* Modal exit animation (mirrors the existing modalPop entrance) */
+        @keyframes modalPopOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0.96); opacity: 0; } }
+        .modal-backdrop-closing { animation: backdropFadeOut 0.18s ease forwards; }
+        @keyframes backdropFadeOut { from { opacity: 1; } to { opacity: 0; } }
+        .modal-backdrop-closing .modal { animation: modalPopOut 0.18s cubic-bezier(0.4,0,0.2,1) forwards; }
+
+        /* Toast entrance/exit */
+        @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, 12px); } }
+        .toast-in { animation: toastIn 0.28s cubic-bezier(0.4,0,0.2,1) forwards; }
+        .toast-out { animation: toastOut 0.22s ease forwards; }
+
         /* Signature: 8-pointed geometric star, used as a motif throughout */
         .star-mark { display: inline-block; }
         .hero-stars {
@@ -173,6 +221,18 @@
                 animation: none !important; transition: none !important;
             }
             .reveal { opacity: 1; transform: none; }
+            html { scroll-behavior: auto; }
+            .hero-stars svg { animation: none !important; }
+            button.rounded-full, a.rounded-full, .app-download-btn, .qibla-search-result-btn {
+                transition: none !important;
+            }
+            button.rounded-full:hover, a.rounded-full:hover, .app-download-btn:hover,
+            button.rounded-full:active, a.rounded-full:active, .app-download-btn:active {
+                transform: none !important;
+            }
+            .modal-backdrop-closing, .modal-backdrop-closing .modal, .toast-in, .toast-out {
+                animation: none !important;
+            }
         }
 
         ::selection { background: #A9812E; color: #F3F1E6; }
@@ -436,7 +496,7 @@
     </div>
 
     <!-- Header / Navbar -->
-    <nav class="bg-paper/90 backdrop-blur border-b border-line sticky top-0 z-50">
+    <nav class="site-nav bg-paper/90 backdrop-blur border-b border-line sticky top-0 z-50">
         <div class="max-w-screen-xl mx-auto px-3 sm:px-8 py-2.5 sm:py-4">
             <div class="bmet-nav-row">
                 <!-- Logo -->
@@ -597,7 +657,7 @@
                     <div class="text-inksoft text-sm mt-1">Install it on your phone for quick access to prayer times and Qibla.</div>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <a href="https://github.com/20RajonAdil/BMet-Prayer-web/releases/download/v1.0/BMetPrayer.apk"
+                    <a href="https://github.com/20RajonAdil/BMet-Prayer-web/releases/latest/download/BMetPrayer.apk"
                        target="_blank" rel="noopener"
                        class="app-download-btn app-download-android">
                         <i class="fa-brands fa-android"></i>
@@ -1804,10 +1864,50 @@
 
         function showToast(message) {
             const toast = document.createElement('div');
-            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 bg-green text-paper px-6 py-3 rounded-full shadow-xl flex items-center gap-x-2 text-sm z-[200]`;
+            toast.className = `fixed bottom-6 left-1/2 bg-green text-paper px-6 py-3 rounded-full shadow-xl flex items-center gap-x-2 text-sm z-[200] toast-in`;
+            toast.style.transform = 'translate(-50%, 0)';
             toast.innerHTML = `<i class="fa-solid fa-check"></i> <span>${message}</span>`;
             document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2200);
+            setTimeout(() => {
+                toast.classList.remove('toast-in');
+                toast.classList.add('toast-out');
+                toast.addEventListener('animationend', () => toast.remove(), { once: true });
+            }, 2200);
+        }
+
+        // Sticky nav gains a soft shadow once the page scrolls beneath it.
+        (function initNavScrollShadow() {
+            const nav = document.querySelector('nav.site-nav');
+            if (!nav) return;
+            const onScroll = () => nav.classList.toggle('nav-scrolled', window.scrollY > 8);
+            window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+        })();
+
+        // Shared helper: fade + scale a modal out before hiding it, instead of
+        // an instant cut, mirroring the existing entrance animation.
+        function closeModalAnimated(modalEl, extraCleanup) {
+            if (!modalEl || modalEl.classList.contains('hidden')) { if (extraCleanup) extraCleanup(); return; }
+            const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (prefersReduced) {
+                modalEl.classList.remove('flex');
+                modalEl.classList.add('hidden');
+                if (extraCleanup) extraCleanup();
+                return;
+            }
+            modalEl.classList.add('modal-backdrop-closing');
+            const finish = () => {
+                modalEl.classList.remove('flex', 'modal-backdrop-closing');
+                modalEl.classList.add('hidden');
+                if (extraCleanup) extraCleanup();
+            };
+            const panel = modalEl.querySelector('.modal');
+            if (panel) {
+                panel.addEventListener('animationend', finish, { once: true });
+                setTimeout(finish, 260); // safety net in case animationend doesn't fire
+            } else {
+                setTimeout(finish, 180);
+            }
         }
 
         /* =====================================================================
@@ -2110,17 +2210,17 @@
 
         function closeQiblaCompass() {
             const modal = document.getElementById('qibla-modal');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-            unlockBodyScroll();
-            if (qiblaMapInstance) {
-                qiblaMapInstance.remove();
-                qiblaMapInstance = null;
-            }
-            if (qiblaMapResizeHandler) {
-                window.removeEventListener('resize', qiblaMapResizeHandler);
-                qiblaMapResizeHandler = null;
-            }
+            closeModalAnimated(modal, () => {
+                unlockBodyScroll();
+                if (qiblaMapInstance) {
+                    qiblaMapInstance.remove();
+                    qiblaMapInstance = null;
+                }
+                if (qiblaMapResizeHandler) {
+                    window.removeEventListener('resize', qiblaMapResizeHandler);
+                    qiblaMapResizeHandler = null;
+                }
+            });
         }
 
         /* ---- Get the App: iOS install guide ---- */
@@ -2132,9 +2232,7 @@
         }
         function closeIosInstallGuide() {
             const modal = document.getElementById('ios-install-modal');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-            unlockBodyScroll();
+            closeModalAnimated(modal, unlockBodyScroll);
         }
 
         /* ---- Manual location search (OpenStreetMap Nominatim) ----
@@ -2242,11 +2340,13 @@
             if (!box || !img) return;
             img.src = src;
             box.classList.remove('hidden');
+            box.classList.add('flex');
+            lockBodyScroll();
         }
 
         function closeLightbox(e) {
             if (e && e.target.id !== 'lightbox') return;
-            document.getElementById('lightbox').classList.add('hidden');
+            closeModalAnimated(document.getElementById('lightbox'), unlockBodyScroll);
         }
 
         function parseTimeToDate(timeStr, addDay = false) {
@@ -2404,6 +2504,7 @@
         function showFullTimetable() {
             document.getElementById('timetable-modal').classList.remove('hidden');
             document.getElementById('timetable-modal').classList.add('flex');
+            lockBodyScroll();
             loadWeeklyTimetable();
         }
 
@@ -2475,9 +2576,7 @@
         }
 
         function hideModal() {
-            const modal = document.getElementById('timetable-modal');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
+            closeModalAnimated(document.getElementById('timetable-modal'), unlockBodyScroll);
         }
 
         // Refresh prayer times
