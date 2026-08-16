@@ -31,6 +31,9 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BMet Prayer">
 
     <script type="application/ld+json">
     {
@@ -367,6 +370,30 @@
         .qibla-heading-toggle:hover { background: #d6e8ea; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+        /* ---- Get the App section ---- */
+        .app-download-btn {
+            display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px;
+            border-radius: 16px; text-decoration: none; transition: opacity 0.15s ease;
+        }
+        .app-download-btn:hover { opacity: 0.9; }
+        .app-download-btn i { font-size: 22px; }
+        .app-download-btn-eyebrow { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; opacity: 0.8; }
+        .app-download-btn-title { display: block; font-weight: 700; font-size: 14px; font-family: 'Space Grotesk', sans-serif; }
+        .app-download-android { background: #0E4B3A; color: #F3F1E6; }
+        .app-download-ios { background: #16231D; color: #F3F1E6; border: none; cursor: pointer; }
+        .ios-step-num {
+            flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+            background: #E2EEEF; color: #1F5C6B; font-weight: 700; font-size: 12px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .app-download-header {
+            display: flex; flex-direction: column; row-gap: 16px; column-gap: 24px;
+        }
+        @media (min-width: 640px) {
+            .app-download-header { flex-direction: row; align-items: center; justify-content: space-between; }
+        }
+        .ios-steps li.ios-step:not(:last-child) { margin-bottom: 12px; }
+
         .qibla-info-block { margin-top: 14px; padding: 12px 14px; border-radius: 16px; border: 1px solid #DDD6BF; }
         .qibla-info-qibla { background: #F1E7CC; border-color: rgba(169,129,46,0.3); }
         .qibla-info-label { font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; color: #4B5D53; }
@@ -516,7 +543,7 @@
                                 </div>
                             </div>
                             <div class="mt-2">
-                                <div class="font-semibold text-sm">Talha</div>
+                                <div class="font-semibold text-sm">Prayer room Leader.Talha</div>
                                 <div class="text-green text-[10px] font-medium uppercase tracking-wide">Founder and Student Lead</div>
                             </div>
                         </div>
@@ -528,7 +555,7 @@
                                 </div>
                             </div>
                             <div class="mt-2">
-                                <div class="font-semibold text-sm">Md Adil Rajon</div>
+                                <div class="font-semibold text-sm">Developer.Md Adil Rajon</div>
                                 <div class="text-green text-[10px] font-medium uppercase tracking-wide">Wbsite developer and manager</div>
                             </div>
                         </div>
@@ -557,6 +584,78 @@
 
                     <div class="mt-auto pt-4 text-center text-inksoft text-xs italic">— With love &amp; dua from the BMet Prayer Team</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Get the App -->
+    <div class="max-w-screen-xl mx-auto px-4 sm:px-6 pt-10 reveal">
+        <div class="tile-card rounded-3xl p-6 sm:p-8">
+            <div class="app-download-header">
+                <div>
+                    <div class="font-display font-bold text-xl text-ink">Get the BMet Prayer App</div>
+                    <div class="text-inksoft text-sm mt-1">Install it on your phone for quick access to prayer times and Qibla.</div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="downloads/BMetPrayer.apk" download
+                       class="app-download-btn app-download-android">
+                        <i class="fa-brands fa-android"></i>
+                        <span>
+                            <span class="app-download-btn-eyebrow">Download for</span>
+                            <span class="app-download-btn-title">Android (APK)</span>
+                        </span>
+                    </a>
+                    <button onclick="openIosInstallGuide()" class="app-download-btn app-download-ios">
+                        <i class="fa-brands fa-apple"></i>
+                        <span>
+                            <span class="app-download-btn-eyebrow">Install on</span>
+                            <span class="app-download-btn-title">iPhone / iPad</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <p class="text-[11px] text-inksoft/70 mt-4 leading-relaxed">
+                The Android app is provided directly as an APK rather than through Google Play, so your phone may show a one-time
+                "install from unknown source" prompt — that's normal for a direct download. On iPhone/iPad, installing works
+                differently: Safari can add this website to your Home Screen as a full, app-like icon — no App Store needed.
+            </p>
+        </div>
+    </div>
+
+    <!-- iOS Install Guide Modal -->
+    <div id="ios-install-modal" class="hidden fixed inset-0 bg-ink/60 z-[100] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="modal bg-white border border-line rounded-3xl w-full p-6 sm:p-7" style="max-width:26rem; max-height:90vh; overflow-y:auto;">
+            <div class="flex justify-between items-center mb-4">
+                <div class="font-display font-bold text-xl">Install on iPhone / iPad</div>
+                <button onclick="closeIosInstallGuide()" class="text-3xl leading-none text-inksoft hover:text-ink">&times;</button>
+            </div>
+            <p class="text-sm text-inksoft mb-4 leading-relaxed">
+                iOS doesn't use APK files — instead, Safari can add this site to your Home Screen as its own app icon, opening full-screen with no browser bar. This must be done in <strong>Safari</strong> (not Chrome or another browser) for it to work.
+            </p>
+            <ol class="ios-steps">
+                <li class="ios-step flex gap-x-3">
+                    <span class="ios-step-num">1</span>
+                    <span class="text-sm text-ink">Open <strong>20rajonadil.github.io/BMet-Prayer-web</strong> in Safari (you're most of the way there already if you're reading this on your iPhone).</span>
+                </li>
+                <li class="ios-step flex gap-x-3">
+                    <span class="ios-step-num">2</span>
+                    <span class="text-sm text-ink">Tap the <strong>Share</strong> icon <i class="fa-solid fa-arrow-up-from-bracket"></i> in Safari's toolbar.</span>
+                </li>
+                <li class="ios-step flex gap-x-3">
+                    <span class="ios-step-num">3</span>
+                    <span class="text-sm text-ink">Scroll down the share menu and tap <strong>"Add to Home Screen."</strong></span>
+                </li>
+                <li class="ios-step flex gap-x-3">
+                    <span class="ios-step-num">4</span>
+                    <span class="text-sm text-ink">Tap <strong>"Add"</strong> in the top right corner.</span>
+                </li>
+                <li class="ios-step flex gap-x-3">
+                    <span class="ios-step-num">5</span>
+                    <span class="text-sm text-ink">A "BMet Prayer" icon now appears on your Home Screen and opens like a normal app.</span>
+                </li>
+            </ol>
+            <div class="mt-4 text-center">
+                <button onclick="closeIosInstallGuide()" class="px-6 py-2.5 rounded-full bg-green text-paper text-sm font-medium hover:bg-green-deep transition-colors">Got it</button>
             </div>
         </div>
     </div>
@@ -2023,6 +2122,20 @@
             }
         }
 
+        /* ---- Get the App: iOS install guide ---- */
+        function openIosInstallGuide() {
+            const modal = document.getElementById('ios-install-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lockBodyScroll();
+        }
+        function closeIosInstallGuide() {
+            const modal = document.getElementById('ios-install-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            unlockBodyScroll();
+        }
+
         /* ---- Manual location search (OpenStreetMap Nominatim) ----
            Only surfaced when automatic detection fails or the user asks to
            change location — never shown by default. */
@@ -2470,6 +2583,11 @@
                     const qiblaModal = document.getElementById('qibla-modal');
                     if (qiblaModal && !qiblaModal.classList.contains('hidden')) {
                         closeQiblaCompass();
+                        return;
+                    }
+                    const iosModal = document.getElementById('ios-install-modal');
+                    if (iosModal && !iosModal.classList.contains('hidden')) {
+                        closeIosInstallGuide();
                     }
                 }
             });
