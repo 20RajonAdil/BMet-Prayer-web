@@ -3,8 +3,8 @@
   "short_name": "BMet Prayer",
   "description": "Prayer times app for BMet College community with live updates, countdown, and location-based timings.",
   "id": "bmet-prayer-app",
-  "start_url": "/index.html",
-  "scope": "/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "display_override": [
     "standalone",
@@ -34,18 +34,11 @@
       "type": "image/png"
     }
   ],
-  "screenshots": [
-    {
-      "src": "screenshot1.png",
-      "sizes": "1280x720",
-      "type": "image/png"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Prayer Times",
       "short_name": "Times",
-      "url": "/Adil.Talha.html#times",
+      "url": "./index.html#times",
       "icons": [
         {
           "src": "icon-192.png",
@@ -57,7 +50,7 @@
     {
       "name": "Qibla",
       "short_name": "Qibla",
-      "url": "/Adil.Talha.html#qibla",
+      "url": "./index.html#qibla",
       "icons": [
         {
           "src": "icon-192.png",
@@ -70,56 +63,5 @@
   "launch_handler": {
     "client_mode": "focus-existing"
   },
-  "protocol_handlers": [
-    {
-      "protocol": "web+prayer",
-      "url": "/index.html?open=%s"
-    }
-  ],
-  "file_handlers": [
-    {
-      "action": "/index.html",
-      "accept": {
-        "application/json": [
-          ".json"
-        ]
-      }
-    }
-  ],
-  "share_target": {
-    "action": "/index.html?share",
-    "method": "GET",
-    "params": {
-      "text": "text",
-      "title": "title",
-      "url": "url"
-    }
-  },
-  "prefer_related_applications": false,
-  "related_applications": [
-    {
-      "platform": "play",
-      "id": "com.bmet.prayer"
-    }
-  ],
-  "iarc_rating_id": "e0",
-  "widgets": [
-    {
-      "name": "Prayer Countdown",
-      "tag": "prayer-countdown",
-      "description": "Live countdown to next prayer"
-    }
-  ],
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "note_taking": {
-    "new_note_url": "/index.html?note=new",
-    "open_at": "silo"
-  },
-  "scope_extensions": [
-    {
-      "origin": "https://20rajonadil.github.io"
-    }
-  ]
+  "prefer_related_applications": false
 }
