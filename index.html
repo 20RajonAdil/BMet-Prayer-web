@@ -93,6 +93,29 @@
         }
         .qibla-search-result-btn:hover { transform: translateY(-1px); }
 
+        /* Subtle "living" glow on the live countdown */
+        #countdown-timer { animation: countdownGlow 3.2s ease-in-out infinite; }
+        @keyframes countdownGlow {
+            0%, 100% { text-shadow: 0 0 0 rgba(14,75,58,0); }
+            50% { text-shadow: 0 0 16px rgba(14,75,58,0.22); }
+        }
+
+        /* Slow gold sheen sweeping across the prayer name — a signature
+           premium-feeling touch, subtle enough not to hurt legibility */
+        #next-prayer-name {
+            background: linear-gradient(100deg, #16231D 42%, #A9812E 50%, #16231D 58%);
+            background-size: 240% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: shimmerSweep 7s ease-in-out infinite;
+            transition: opacity 0.25s ease;
+        }
+        @keyframes shimmerSweep {
+            0% { background-position: 200% 0; }
+            100% { background-position: -40% 0; }
+        }
+
         /* Sticky nav gains depth once the page scrolls under it */
         nav.site-nav { transition: box-shadow 0.25s ease, background-color 0.25s ease; }
         nav.site-nav.nav-scrolled { box-shadow: 0 8px 24px -16px rgba(22,35,29,0.35); }
@@ -232,6 +255,14 @@
             }
             .modal-backdrop-closing, .modal-backdrop-closing .modal, .toast-in, .toast-out {
                 animation: none !important;
+            }
+            #countdown-timer, #next-prayer-name {
+                animation: none !important;
+            }
+            #next-prayer-name {
+                background: none !important;
+                -webkit-text-fill-color: initial !important;
+                color: #16231D !important;
             }
         }
 
@@ -454,6 +485,58 @@
         }
         .ios-steps li.ios-step:not(:last-child) { margin-bottom: 12px; }
 
+        /* ---- Team card: a slow, thin gold-to-green light sweeping the rim ----
+           Inspired by OriginKit's "Neon Border" concept, rebuilt from scratch in
+           plain CSS using the site's own brass/green palette. A single masked
+           pseudo-element ring, animated only via a custom-property angle —
+           no JS, no canvas, fully GPU-composited. Deliberately restrained:
+           thin, low-opacity, slow, and confined to one card rather than
+           applied everywhere. */
+        @property --glow-angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+        }
+        .team-card-glow { position: relative; }
+        .team-card-glow::before {
+            content: "";
+            position: absolute;
+            inset: -1.5px;
+            border-radius: 1.55rem;
+            padding: 1.5px;
+            background: conic-gradient(from var(--glow-angle, 0deg),
+                transparent 0%, transparent 76%,
+                rgba(169,129,46,0.9) 85%,
+                rgba(14,75,58,0.8) 92%,
+                transparent 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0.9;
+            animation: teamGlowRotate 9s linear infinite;
+        }
+        @keyframes teamGlowRotate { to { --glow-angle: 360deg; } }
+        @media (prefers-reduced-motion: reduce) {
+            .team-card-glow::before { animation: none; }
+        }
+
+        /* ---- Prayer Reminders: toggle switches ---- */
+        .reminder-switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+        .reminder-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 1; }
+        .reminder-switch-track {
+            position: absolute; inset: 0; border-radius: 999px; background: #DDD6BF;
+            transition: background-color 0.2s ease;
+        }
+        .reminder-switch-thumb {
+            position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+            background: #fff; box-shadow: 0 1px 3px rgba(22,35,29,0.4);
+            transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+        }
+        .reminder-switch input:checked ~ .reminder-switch-track { background: #A9812E; }
+        .reminder-switch input:checked ~ .reminder-switch-track .reminder-switch-thumb { transform: translateX(18px); }
+        .reminder-prayer-list label:not(:last-child) { margin-bottom: 8px; }
+
         .qibla-info-block { margin-top: 14px; padding: 12px 14px; border-radius: 16px; border: 1px solid #DDD6BF; }
         .qibla-info-qibla { background: #F1E7CC; border-color: rgba(169,129,46,0.3); }
         .qibla-info-label { font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; color: #4B5D53; }
@@ -527,6 +610,13 @@
                         <span class="hidden sm:inline">Qibla</span>
                     </button>
 
+                    <!-- Prayer Reminders Button -->
+                    <button onclick="openReminderSettings()" id="reminder-nav-btn"
+                            class="flex items-center gap-x-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-full bg-brass-soft border border-brass/25 text-brass transition-colors">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="hidden sm:inline">Reminders</span>
+                    </button>
+
                     <!-- Refresh Prayer Times Button -->
                     <button onclick="refreshPrayerTimes()"
                             class="flex items-center gap-x-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-full bg-green-soft hover:bg-green/10 border border-green/20 text-green transition-colors">
@@ -593,7 +683,7 @@
                 </div>
 
                 <!-- Team card -->
-                <div class="lg:col-span-5 tile-card rounded-3xl p-6 sm:p-7 flex flex-col shadow-sm">
+                <div class="lg:col-span-5 tile-card team-card-glow rounded-3xl p-6 sm:p-7 flex flex-col shadow-sm">
                     <div class="flex justify-center gap-6 mb-5">
                         <div class="text-center">
                             <div class="relative inline-block">
@@ -721,7 +811,66 @@
         </div>
     </div>
 
-    <!-- Today's Prayer Times -->
+    <!-- Prayer Reminders Modal -->
+    <div id="reminder-modal" class="hidden fixed inset-0 bg-ink/60 z-[100] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="modal bg-white border border-line rounded-3xl w-full p-6 sm:p-7" style="max-width:26rem; max-height:90vh; overflow-y:auto;">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <div class="font-display font-bold text-xl">Prayer Reminders</div>
+                    <div class="text-brass text-xs" id="reminder-status-label">Off</div>
+                </div>
+                <button onclick="closeReminderSettings()" class="text-3xl leading-none text-inksoft hover:text-ink">&times;</button>
+            </div>
+
+            <!-- Explain-first: shown before any permission prompt -->
+            <div id="reminder-intro">
+                <p class="text-sm text-inksoft leading-relaxed mb-4">
+                    Get a calm, distinct MAAR reminder — not the Adhan, just a short respectful nudge with the prayer name and time —
+                    a few minutes after each prayer begins. Nothing is sent anywhere; everything runs on your own device.
+                </p>
+                <button onclick="enablePrayerReminders()" id="reminder-enable-btn"
+                        class="w-full px-5 py-3 rounded-full bg-brass text-paper text-sm font-medium hover:bg-brass-light transition-colors">
+                    <i class="fa-regular fa-bell mr-2"></i>Enable Prayer Reminders
+                </button>
+                <p id="reminder-denied-note" class="hidden text-[11px] text-clay mt-3 leading-relaxed">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                    Notifications are blocked for this site in your browser. To turn them on, open your browser's site settings for
+                    this page and allow notifications, then reopen this panel.
+                </p>
+                <p id="reminder-unsupported-note" class="hidden text-[11px] text-inksoft/70 mt-3 leading-relaxed">
+                    This browser doesn't support notifications, so reminders aren't available here — everything else on the site works as normal.
+                </p>
+            </div>
+
+            <!-- Shown once permission is granted -->
+            <div id="reminder-settings" class="hidden">
+                <div class="flex items-center justify-between mb-4 bg-brass-soft border border-brass/25 rounded-2xl p-4">
+                    <div>
+                        <div class="text-sm font-semibold text-ink">All reminders</div>
+                        <div class="text-[11px] text-inksoft">Master switch</div>
+                    </div>
+                    <label class="reminder-switch">
+                        <input type="checkbox" id="reminder-master-toggle" onchange="onReminderMasterToggle()">
+                        <span class="reminder-switch-track"><span class="reminder-switch-thumb"></span></span>
+                    </label>
+                </div>
+
+                <div class="text-[11px] font-semibold uppercase tracking-wide text-inksoft mb-2">Choose which prayers</div>
+                <div id="reminder-prayer-list" class="reminder-prayer-list mb-4"></div>
+
+                <button onclick="sendTestReminder()" class="w-full px-5 py-2.5 rounded-full bg-white border border-line text-sm font-medium hover:bg-paper2 transition-colors">
+                    <i class="fa-solid fa-vial mr-2"></i>Send a test reminder
+                </button>
+
+                <p class="text-[11px] text-inksoft/70 mt-4 leading-relaxed">
+                    Reminders fire reliably whenever this site or the installed app has been opened recently. On supported Android
+                    installs they may also fire in the background, but timing there isn't guaranteed — opening the app now and then
+                    keeps reminders flowing normally.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <div id="prayer-times" class="max-w-screen-xl mx-auto px-4 sm:px-6 pt-10 reveal">
         <div class="flex items-center justify-between mb-5 flex-wrap gap-y-3">
             <div class="flex items-center gap-x-3">
@@ -1076,120 +1225,120 @@
         const ARABIC_EDITION = 'quran-uthmani';
         const QASMI_AUDIO_BASE = 'https://archive.org/download/QuranByQariShakirQasmi/';
         const QASMI_AUDIO_FILES = {
-          1: "Surah001Al-fateha-TheOpening.mp3",
-          2: "Surah002Al-baqarah-TheCow.mp3",
-          3: "Surah003Aal-e-imran-TheFamilyOfImran.mp3",
-          4: "Surah004An-nisa-Women.mp3",
-          5: "Surah005Al-maedah-TheTableSpread.mp3",
-          6: "Surah006Al-anaam-Livestock.mp3",
-          7: "Surah007Al-aaraaf-TheHeights.mp3",
-          8: "Surah008Al-anfal-SpoilsOfWar.mp3",
-          9: "Surah009At-tawba-Repentance.mp3",
-          10: "Surah010Yunus-Jonah.mp3",
-          11: "Surah011Hood-Hud.mp3",
-          12: "Surah012Yusuf-Joseph.mp3",
-          13: "Surah013Ar-raad-TheThunder.mp3",
-          14: "Surah014Ibrahim-Abraham.mp3",
-          15: "Surah015Al-hijr-StoneLand.mp3",
-          16: "Surah016An-nahl-TheBee.mp3",
-          17: "Surah017BaniIsraeel-ChildrenOfIsrael.mp3",
-          18: "Surah018Al-kahf-TheCave.mp3",
-          19: "Surah019Maryam-Mary.mp3",
-          20: "Surah020TaHa-TaHa.mp3",
-          21: "Surah021Al-ambiya-TheProphets.mp3",
-          22: "Surah022Al-hajj-ThePilgrimage.mp3",
-          23: "Surah023Al-momenoon-TheBelievers.mp3",
-          24: "Surah024An-noor-TheLight.mp3",
-          25: "Surah025Al-furqan-TheCriterion.mp3",
-          26: "Surah026Ash-shuara-ThePoets.mp3",
-          27: "Surah027An-naml-TheAnt.mp3",
-          28: "Surah028Al-qasas-TheStory.mp3",
-          29: "Surah029Al-ankaboot-TheSpider.mp3",
-          30: "Surah030Ar-room-TheRomans.mp3",
-          31: "Surah031Luqman-Luqman.mp3",
-          32: "Surah032As-sajda-TheProstration.mp3",
-          33: "Surah033Al-ahzab-TheClans.mp3",
-          34: "Surah034Saba-Sheba.mp3",
-          35: "Surah035Fatir-TheOriginatorOfCreation.mp3",
-          36: "Surah036YaSeen-YaSin.mp3",
-          37: "Surah037As-saffaat-DrawnUpInRanks.mp3",
-          38: "Surah038Saad-ArabicLettersaad.mp3",
-          39: "Surah039Az-zumar-TheTroops.mp3",
-          40: "Surah040Al-momin-TheBeliever.mp3",
-          41: "Surah041Haameem-HaMim.mp3",
-          42: "Surah042Ash-shoora-Consultation.mp3",
-          43: "Surah043Az-zukhruf-OrnamentsOfGold.mp3",
-          44: "Surah044Ad-dukhan-Smoke.mp3",
-          45: "Surah045Al-jaseyah-Crouching.mp3",
-          46: "Surah046Al-ahqaf-TheDunes.mp3",
-          47: "Surah047Muhammad-Mohammed.mp3",
-          48: "Surah048Al-fatah-Victory.mp3",
-          49: "Surah049Al-hujurat-ThePrivateAppartments.mp3",
-          50: "Surah050Qaaf-ArabicLetterqaaf.mp3",
-          51: "Surah051Az-zariat-TheWinnowingWinds.mp3",
-          52: "Surah052At-toor-TheMount.mp3",
-          53: "Surah053An-najm-TheStar.mp3",
-          54: "Surah054Al-qamar-TheMoon.mp3",
-          55: "Surah055Ar-rahman-TheBeneficient.mp3",
-          56: "Surah056Al-waqia-TheEvent.mp3",
-          57: "Surah057Al-hadeed-TheIron.mp3",
-          58: "Surah058Al-mujadila-SheThatDisputeth.mp3",
-          59: "Surah059Al-hashr-Exile.mp3",
-          60: "Surah060Al-mumtahina-ExaminingHer.mp3",
-          61: "Surah061As-saf-TheRanks.mp3",
-          62: "Surah062Jummah-TheCongregation.mp3",
-          63: "Surah063Al-munafiqoon-TheHypocrites.mp3",
-          64: "Surah064At-tagabun-MutualDisillusion.mp3",
-          65: "Surah065At-talaq-Divorce.mp3",
-          66: "Surah066At-tahreem-Prohibition.mp3",
-          67: "Surah067Al-mulk-TheSovereignty.mp3",
-          68: "Surah068Al-qalam-ThePen.mp3",
-          69: "Surah069Al-haaqah-TheReality.mp3",
-          70: "Surah070Al-maarij-TheAscendingStairways.mp3",
-          71: "Surah071Nuh-Noah.mp3",
-          72: "Surah072Al-jinn-TheJinn.mp3",
-          73: "Surah073Al-muzammil-TheEnshroudedOne.mp3",
-          74: "Surah074Al-muddassir-TheCloakedOne.mp3",
-          75: "Surah075Al-qiyama-TheResurrection.mp3",
-          76: "Surah076Al-insan-Man.mp3",
-          77: "Surah077Al-mursalat-TheEmissaries.mp3",
-          78: "Surah078An-naba-TheTidings.mp3",
-          79: "Surah079An-naziat-ThoseWhoDragForth.mp3",
-          80: "Surah080Abasa-HeFrowned.mp3",
-          81: "Surah081At-takwir-TheOverthrowing.mp3",
-          82: "Surah082Al-infitar-TheCleaving.mp3",
-          83: "Surah083Al-mutaffifin-Defrauding.mp3",
-          84: "Surah084Al-inshiqaq-TheSundering.mp3",
-          85: "Surah085Al-burooj-TheMansionsOfTheStars.mp3",
-          86: "Surah086At-tariq-TheMorningStar1.mp3",
-          87: "Surah087Al-ala-TheMostHigh.mp3",
-          88: "Surah088Al-ghashiya-TheOverwhelming.mp3",
-          89: "Surah089Al-fajr-TheDawn.mp3",
-          90: "Surah090Al-balad-TheCity.mp3",
-          91: "Surah091Ash-shams-TheSun.mp3",
-          92: "Surah092Al-lail-TheNight.mp3",
-          93: "Surah093Ad-dhuha-TheMorningHours.mp3",
-          94: "Surah094AlmNashra-Solace.mp3",
-          95: "Surah095At-tin-TheFig.mp3",
-          96: "Surah096Al-alaq-TheClot.mp3",
-          97: "Surah097Al-qadr-Power.mp3",
-          98: "Surah098Al-bayyina-TheClearProof.mp3",
-          99: "Surah099Az-zalzala-TheEarthquake.mp3",
-          100: "Surah100Al-adiyat-TheCoursers.mp3",
-          101: "Surah101Al-qaria-TheCalamity.mp3",
-          102: "Surah102At-takathur-Competition.mp3",
-          103: "Surah103Al-asr-TheDecliningDay.mp3",
-          104: "Surah104Al-humaza-TheTraducer.mp3",
-          105: "Surah105Al-fil-TheElephant.mp3",
-          106: "Surah106Quraish-Quraysh.mp3",
-          107: "Surah107Al-maun-SmallKindnesses.mp3",
-          108: "Surah108Al-kauther-Abundance.mp3",
-          109: "Surah109Al-kafiroon-TheDisbelievers.mp3",
-          110: "Surah110An-nasr-DivineSupport.mp3",
-          111: "Surah111Al-masadd-TheFlame.mp3",
-          112: "Surah112Al-ikhlas-TheUnityOfGod.mp3",
-          113: "Surah113Al-falaq-TheDaybreak.mp3",
-          114: "Surah114An-nas-Mankind.mp3"
+          1: "Surah001Al-fateha-TheOpening.ogg",
+          2: "Surah002Al-baqarah-TheCow.ogg",
+          3: "Surah003Aal-e-imran-TheFamilyOfImran.ogg",
+          4: "Surah004An-nisa-Women.ogg",
+          5: "Surah005Al-maedah-TheTableSpread.ogg",
+          6: "Surah006Al-anaam-Livestock.ogg",
+          7: "Surah007Al-aaraaf-TheHeights.ogg",
+          8: "Surah008Al-anfal-SpoilsOfWar.ogg",
+          9: "Surah009At-tawba-Repentance.ogg",
+          10: "Surah010Yunus-Jonah.ogg",
+          11: "Surah011Hood-Hud.ogg",
+          12: "Surah012Yusuf-Joseph.ogg",
+          13: "Surah013Ar-raad-TheThunder.ogg",
+          14: "Surah014Ibrahim-Abraham.ogg",
+          15: "Surah015Al-hijr-StoneLand.ogg",
+          16: "Surah016An-nahl-TheBee.ogg",
+          17: "Surah017BaniIsraeel-ChildrenOfIsrael.ogg",
+          18: "Surah018Al-kahf-TheCave.ogg",
+          19: "Surah019Maryam-Mary.ogg",
+          20: "Surah020TaHa-TaHa.ogg",
+          21: "Surah021Al-ambiya-TheProphets.ogg",
+          22: "Surah022Al-hajj-ThePilgrimage.ogg",
+          23: "Surah023Al-momenoon-TheBelievers.ogg",
+          24: "Surah024An-noor-TheLight.ogg",
+          25: "Surah025Al-furqan-TheCriterion.ogg",
+          26: "Surah026Ash-shuara-ThePoets.ogg",
+          27: "Surah027An-naml-TheAnt.ogg",
+          28: "Surah028Al-qasas-TheStory.ogg",
+          29: "Surah029Al-ankaboot-TheSpider.ogg",
+          30: "Surah030Ar-room-TheRomans.ogg",
+          31: "Surah031Luqman-Luqman.ogg",
+          32: "Surah032As-sajda-TheProstration.ogg",
+          33: "Surah033Al-ahzab-TheClans.ogg",
+          34: "Surah034Saba-Sheba.ogg",
+          35: "Surah035Fatir-TheOriginatorOfCreation.ogg",
+          36: "Surah036YaSeen-YaSin.ogg",
+          37: "Surah037As-saffaat-DrawnUpInRanks.ogg",
+          38: "Surah038Saad-ArabicLettersaad.ogg",
+          39: "Surah039Az-zumar-TheTroops.ogg",
+          40: "Surah040Al-momin-TheBeliever.ogg",
+          41: "Surah041Haameem-HaMim.ogg",
+          42: "Surah042Ash-shoora-Consultation.ogg",
+          43: "Surah043Az-zukhruf-OrnamentsOfGold.ogg",
+          44: "Surah044Ad-dukhan-Smoke.ogg",
+          45: "Surah045Al-jaseyah-Crouching.ogg",
+          46: "Surah046Al-ahqaf-TheDunes.ogg",
+          47: "Surah047Muhammad-Mohammed.ogg",
+          48: "Surah048Al-fatah-Victory.ogg",
+          49: "Surah049Al-hujurat-ThePrivateAppartments.ogg",
+          50: "Surah050Qaaf-ArabicLetterqaaf.ogg",
+          51: "Surah051Az-zariat-TheWinnowingWinds.ogg",
+          52: "Surah052At-toor-TheMount.ogg",
+          53: "Surah053An-najm-TheStar.ogg",
+          54: "Surah054Al-qamar-TheMoon.ogg",
+          55: "Surah055Ar-rahman-TheBeneficient.ogg",
+          56: "Surah056Al-waqia-TheEvent.ogg",
+          57: "Surah057Al-hadeed-TheIron.ogg",
+          58: "Surah058Al-mujadila-SheThatDisputeth.ogg",
+          59: "Surah059Al-hashr-Exile.ogg",
+          60: "Surah060Al-mumtahina-ExaminingHer.ogg",
+          61: "Surah061As-saf-TheRanks.ogg",
+          62: "Surah062Jummah-TheCongregation.ogg",
+          63: "Surah063Al-munafiqoon-TheHypocrites.ogg",
+          64: "Surah064At-tagabun-MutualDisillusion.ogg",
+          65: "Surah065At-talaq-Divorce.ogg",
+          66: "Surah066At-tahreem-Prohibition.ogg",
+          67: "Surah067Al-mulk-TheSovereignty.ogg",
+          68: "Surah068Al-qalam-ThePen.ogg",
+          69: "Surah069Al-haaqah-TheReality.ogg",
+          70: "Surah070Al-maarij-TheAscendingStairways.ogg",
+          71: "Surah071Nuh-Noah.ogg",
+          72: "Surah072Al-jinn-TheJinn.ogg",
+          73: "Surah073Al-muzammil-TheEnshroudedOne.ogg",
+          74: "Surah074Al-muddassir-TheCloakedOne.ogg",
+          75: "Surah075Al-qiyama-TheResurrection.ogg",
+          76: "Surah076Al-insan-Man.ogg",
+          77: "Surah077Al-mursalat-TheEmissaries.ogg",
+          78: "Surah078An-naba-TheTidings.ogg",
+          79: "Surah079An-naziat-ThoseWhoDragForth.ogg",
+          80: "Surah080Abasa-HeFrowned.ogg",
+          81: "Surah081At-takwir-TheOverthrowing.ogg",
+          82: "Surah082Al-infitar-TheCleaving.ogg",
+          83: "Surah083Al-mutaffifin-Defrauding.ogg",
+          84: "Surah084Al-inshiqaq-TheSundering.ogg",
+          85: "Surah085Al-burooj-TheMansionsOfTheStars.ogg",
+          86: "Surah086At-tariq-TheMorningStar1.ogg",
+          87: "Surah087Al-ala-TheMostHigh.ogg",
+          88: "Surah088Al-ghashiya-TheOverwhelming.ogg",
+          89: "Surah089Al-fajr-TheDawn.ogg",
+          90: "Surah090Al-balad-TheCity.ogg",
+          91: "Surah091Ash-shams-TheSun.ogg",
+          92: "Surah092Al-lail-TheNight.ogg",
+          93: "Surah093Ad-dhuha-TheMorningHours.ogg",
+          94: "Surah094AlmNashra-Solace.ogg",
+          95: "Surah095At-tin-TheFig.ogg",
+          96: "Surah096Al-alaq-TheClot.ogg",
+          97: "Surah097Al-qadr-Power.ogg",
+          98: "Surah098Al-bayyina-TheClearProof.ogg",
+          99: "Surah099Az-zalzala-TheEarthquake.ogg",
+          100: "Surah100Al-adiyat-TheCoursers.ogg",
+          101: "Surah101Al-qaria-TheCalamity.ogg",
+          102: "Surah102At-takathur-Competition.ogg",
+          103: "Surah103Al-asr-TheDecliningDay.ogg",
+          104: "Surah104Al-humaza-TheTraducer.ogg",
+          105: "Surah105Al-fil-TheElephant.ogg",
+          106: "Surah106Quraish-Quraysh.ogg",
+          107: "Surah107Al-maun-SmallKindnesses.ogg",
+          108: "Surah108Al-kauther-Abundance.ogg",
+          109: "Surah109Al-kafiroon-TheDisbelievers.ogg",
+          110: "Surah110An-nasr-DivineSupport.ogg",
+          111: "Surah111Al-masadd-TheFlame.ogg",
+          112: "Surah112Al-ikhlas-TheUnityOfGod.ogg",
+          113: "Surah113Al-falaq-TheDaybreak.ogg",
+          114: "Surah114An-nas-Mankind.ogg"
         };
 
         let currentSurahNumber = null;
@@ -1522,6 +1671,8 @@
         const quranAudioEl = document.getElementById('quranAudioEl');
         const LOADING_ICON_SVG = '<svg class="icon-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true" style="animation:spin 0.8s linear infinite;"><path d="M12 2a10 10 0 0 1 10 10"/></svg>';
         let currentSurahHasAudio = false;
+        let quranAudioTriedFallback = false;
+        let quranAudioWantsPlay = false;
 
         function setSurahAudioButtonState(state) {
             const btn = document.getElementById('playSurahBtn');
@@ -1535,20 +1686,30 @@
             const file = QASMI_AUDIO_FILES[number];
             quranAudioEl.pause();
             currentSurahHasAudio = !!file;
+            quranAudioTriedFallback = false;
+            quranAudioWantsPlay = false;
             quranAudioEl.src = file ? (QASMI_AUDIO_BASE + encodeURIComponent(file)) : '';
             setSurahAudioButtonState('idle');
         }
         function stopAudio() {
+            quranAudioWantsPlay = false;
             quranAudioEl.pause();
             setSurahAudioButtonState('idle');
         }
         document.getElementById('playSurahBtn').onclick = () => {
             if (!currentSurahHasAudio) { showToast("Audio for this surah isn't available."); return; }
             if (!quranAudioEl.paused) {
+                quranAudioWantsPlay = false;
                 quranAudioEl.pause();
             } else {
+                quranAudioWantsPlay = true;
                 setSurahAudioButtonState('loading');
                 quranAudioEl.play().catch(() => {
+                    // A rejected play() promise here (rather than a later 'error'
+                    // event) usually means the browser blocked it outright, not a
+                    // load failure — the 'error' listener below handles the
+                    // load-failure/format-fallback case separately.
+                    if (quranAudioEl.error) return; // let the error handler deal with it
                     setSurahAudioButtonState('idle');
                     showToast("Couldn't start playback — please check your connection.");
                 });
@@ -1564,7 +1725,25 @@
             quranAudioEl.currentTime = 0;
             setSurahAudioButtonState('idle');
         });
+        // This Internet Archive item's only officially-listed files are
+        // .ogg — that's what we request by default (works natively in
+        // Chrome, Firefox, Edge, and Android). Safari/iOS can't play .ogg
+        // at all, though, so if playback errors out there, try the same
+        // filename as .mp3 once as a best-effort fallback before giving up.
         quranAudioEl.addEventListener('error', () => {
+            const file = QASMI_AUDIO_FILES[currentSurahNumber];
+            if (!quranAudioTriedFallback && file && file.toLowerCase().endsWith('.ogg')) {
+                quranAudioTriedFallback = true;
+                const mp3File = file.replace(/\.ogg$/i, '.mp3');
+                quranAudioEl.src = QASMI_AUDIO_BASE + encodeURIComponent(mp3File);
+                if (quranAudioWantsPlay) {
+                    setSurahAudioButtonState('loading');
+                    quranAudioEl.play().catch(() => {
+                        if (quranAudioEl.error) return;
+                    });
+                }
+                return;
+            }
             setSurahAudioButtonState('idle');
             showToast("Couldn't load the audio for this surah — please check your connection and try again.");
         });
@@ -1908,6 +2087,275 @@
             } else {
                 setTimeout(finish, 180);
             }
+        }
+
+        /* =====================================================================
+           PRAYER REMINDERS
+           Honest architecture note (also shown in the UI): this is a
+           client-only, backend-less static site. Two delivery paths exist:
+             1) RELIABLE: while this site/PWA has been opened recently (open
+                tab, backgrounded tab, or PWA running behind other apps),
+                a periodic check here compares the clock to today's prayer
+                times and fires a real OS notification via the service
+                worker's registration.showNotification().
+             2) BEST-EFFORT ONLY: sw.js also listens for the browser's
+                periodicsync/sync events, which some Chromium/Android
+                installs use to occasionally wake the worker even when the
+                app is fully closed. Timing there is entirely up to the
+                browser's own engagement heuristics — not guaranteed, and
+                not something this code controls.
+           True guaranteed delivery with the app fully closed needs a real
+           server sending push messages on a schedule; a static GitHub
+           Pages site has no backend to do that.
+           ========================================================================= */
+        const REMINDER_PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+        const REMINDER_DEFAULT_COORDS = { lat: 52.4862, lon: -1.8904 }; // Birmingham, matches the site's default city
+        let reminderSettings = loadReminderSettings();
+        let reminderCheckInterval = null;
+        let swRegistration = null;
+
+        function loadReminderSettings() {
+            try {
+                const raw = localStorage.getItem('bmetReminderSettings');
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            const prayers = {};
+            REMINDER_PRAYERS.forEach(p => prayers[p] = true);
+            return { enabled: false, prayers, coords: null, notifiedDay: null, notifiedList: [] };
+        }
+
+        function saveReminderSettings() {
+            localStorage.setItem('bmetReminderSettings', JSON.stringify(reminderSettings));
+            // Mirror into IndexedDB too, in the same shape sw.js expects, so
+            // the best-effort background path can read the same settings.
+            idbSetReminder('bmet-settings-store', 'settings', {
+                enabled: reminderSettings.enabled,
+                prayers: reminderSettings.prayers,
+                coords: reminderSettings.coords
+            }).catch(() => {});
+        }
+
+        function idbOpenReminder() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open('bmet-prayer-db', 1);
+                req.onupgradeneeded = () => {
+                    const db = req.result;
+                    if (!db.objectStoreNames.contains('bmet-notified-store')) db.createObjectStore('bmet-notified-store');
+                    if (!db.objectStoreNames.contains('bmet-settings-store')) db.createObjectStore('bmet-settings-store');
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+        async function idbSetReminder(store, key, value) {
+            const db = await idbOpenReminder();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(store, 'readwrite');
+                tx.objectStore(store).put(value, key);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        async function registerReminderServiceWorker() {
+            if (!('serviceWorker' in navigator)) return null;
+            try {
+                swRegistration = await navigator.serviceWorker.register('./sw.js');
+                return swRegistration;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function openReminderSettings() {
+            const modal = document.getElementById('reminder-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lockBodyScroll();
+            renderReminderModalState();
+        }
+        function closeReminderSettings() {
+            closeModalAnimated(document.getElementById('reminder-modal'), unlockBodyScroll);
+        }
+
+        function renderReminderModalState() {
+            const introEl = document.getElementById('reminder-intro');
+            const settingsEl = document.getElementById('reminder-settings');
+            const statusLabel = document.getElementById('reminder-status-label');
+            const deniedNote = document.getElementById('reminder-denied-note');
+            const unsupportedNote = document.getElementById('reminder-unsupported-note');
+            const enableBtn = document.getElementById('reminder-enable-btn');
+
+            if (!('Notification' in window)) {
+                introEl.classList.remove('hidden');
+                settingsEl.classList.add('hidden');
+                enableBtn.classList.add('hidden');
+                unsupportedNote.classList.remove('hidden');
+                statusLabel.textContent = 'Not supported here';
+                return;
+            }
+
+            if (Notification.permission === 'granted' && reminderSettings.enabled) {
+                introEl.classList.add('hidden');
+                settingsEl.classList.remove('hidden');
+                statusLabel.textContent = 'On';
+                document.getElementById('reminder-master-toggle').checked = true;
+                renderReminderPrayerList();
+                startReminderChecking();
+            } else if (Notification.permission === 'denied') {
+                introEl.classList.remove('hidden');
+                settingsEl.classList.add('hidden');
+                enableBtn.classList.add('hidden');
+                deniedNote.classList.remove('hidden');
+                statusLabel.textContent = 'Blocked';
+            } else {
+                introEl.classList.remove('hidden');
+                settingsEl.classList.add('hidden');
+                enableBtn.classList.remove('hidden');
+                deniedNote.classList.add('hidden');
+                unsupportedNote.classList.add('hidden');
+                statusLabel.textContent = 'Off';
+            }
+        }
+
+        function renderReminderPrayerList() {
+            const list = document.getElementById('reminder-prayer-list');
+            list.innerHTML = REMINDER_PRAYERS.map(name => `
+                <label class="flex items-center justify-between px-3.5 py-2.5 rounded-2xl border border-line bg-white">
+                    <span class="text-sm text-ink">${name}</span>
+                    <span class="reminder-switch">
+                        <input type="checkbox" ${reminderSettings.prayers[name] ? 'checked' : ''}
+                               onchange="onReminderPrayerToggle('${name}', this.checked)">
+                        <span class="reminder-switch-track"><span class="reminder-switch-thumb"></span></span>
+                    </span>
+                </label>
+            `).join('');
+        }
+
+        async function enablePrayerReminders() {
+            if (!('Notification' in window)) return;
+            const btn = document.getElementById('reminder-enable-btn');
+            btn.disabled = true;
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    renderReminderModalState();
+                    return;
+                }
+                await registerReminderServiceWorker();
+
+                reminderSettings.enabled = true;
+                reminderSettings.coords = currentCoords || REMINDER_DEFAULT_COORDS;
+                saveReminderSettings();
+
+                // Best-effort background registration — silently ignored on
+                // browsers that don't support it, which is most of them.
+                try {
+                    if (swRegistration && 'periodicSync' in swRegistration) {
+                        const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+                        if (status.state === 'granted') {
+                            await swRegistration.periodicSync.register('bmet-prayer-check', { minInterval: 60 * 60 * 1000 });
+                        }
+                    } else if (swRegistration && swRegistration.sync) {
+                        await swRegistration.sync.register('bmet-prayer-check');
+                    }
+                } catch (e) { /* best-effort only — fine if unavailable */ }
+
+                renderReminderModalState();
+                showToast('Prayer reminders are on');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function onReminderMasterToggle() {
+            const checked = document.getElementById('reminder-master-toggle').checked;
+            reminderSettings.enabled = checked;
+            saveReminderSettings();
+            if (checked) {
+                startReminderChecking();
+                showToast('Prayer reminders are on');
+            } else {
+                stopReminderChecking();
+                showToast('Prayer reminders are off');
+            }
+        }
+
+        function onReminderPrayerToggle(name, checked) {
+            reminderSettings.prayers[name] = checked;
+            saveReminderSettings();
+        }
+
+        function startReminderChecking() {
+            if (reminderCheckInterval) return;
+            runReminderCheck();
+            reminderCheckInterval = setInterval(runReminderCheck, 30000);
+        }
+        function stopReminderChecking() {
+            if (reminderCheckInterval) { clearInterval(reminderCheckInterval); reminderCheckInterval = null; }
+        }
+
+        // The reliable path: runs whenever this tab/PWA is open (foreground
+        // or background), comparing the clock to today's already-fetched
+        // prayer times and firing a real notification for anything that
+        // just started and hasn't been announced yet today.
+        function runReminderCheck() {
+            if (!reminderSettings.enabled || Notification.permission !== 'granted') return;
+            if (!prayerTimesData) return;
+
+            const now = new Date();
+            const dayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+            if (reminderSettings.notifiedDay !== dayKey) {
+                reminderSettings.notifiedDay = dayKey;
+                reminderSettings.notifiedList = [];
+            }
+
+            REMINDER_PRAYERS.forEach(name => {
+                if (!reminderSettings.prayers[name]) return;
+                if (reminderSettings.notifiedList.includes(name)) return;
+                const raw = (prayerTimesData[name] || '').split(' ')[0];
+                if (!raw || !raw.includes(':')) return;
+                const [h, m] = raw.split(':').map(Number);
+                const prayerDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+                const diffMin = (now.getTime() - prayerDate.getTime()) / 60000;
+                if (diffMin >= 0 && diffMin <= 10) {
+                    fireReminderNotification(name, raw);
+                    reminderSettings.notifiedList.push(name);
+                    saveReminderSettings();
+                }
+            });
+        }
+
+        const REMINDER_MESSAGES = {
+            Fajr: 'The day begins with remembrance.',
+            Dhuhr: 'A pause in the middle of the day, for the One who sustains it.',
+            Asr: 'The afternoon light is a reminder in itself.',
+            Maghrib: 'As the sun sets, turn toward what matters.',
+            Isha: 'Close the day the way you opened it.'
+        };
+
+        async function fireReminderNotification(name, timeStr) {
+            const title = `${name} — MAAR Prayer Reminder`;
+            const body = `${REMINDER_MESSAGES[name] || ''} (${timeStr})`;
+            const options = {
+                body,
+                icon: 'icon-192.png',
+                badge: 'icon-192.png',
+                tag: 'bmet-prayer-' + name,
+                silent: false
+            };
+            try {
+                if (swRegistration) {
+                    await swRegistration.showNotification(title, options);
+                } else if ('Notification' in window) {
+                    new Notification(title, options);
+                }
+            } catch (e) { /* nothing more we can do client-side */ }
+        }
+
+        function sendTestReminder() {
+            fireReminderNotification('Test', new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+            showToast('Test reminder sent');
         }
 
         /* =====================================================================
@@ -2442,7 +2890,16 @@
             if (timerEl) timerEl.textContent = display;
 
             const nameEl = document.getElementById('next-prayer-name');
-            if (nameEl) nameEl.textContent = displayPrayerName(nextPrayerName);
+            if (nameEl) {
+                const newName = displayPrayerName(nextPrayerName);
+                if (nameEl.textContent !== newName) {
+                    nameEl.style.opacity = '0';
+                    setTimeout(() => {
+                        nameEl.textContent = newName;
+                        nameEl.style.opacity = '1';
+                    }, 220);
+                }
+            }
         }
 
         function renderPrayerTimesList() {
@@ -2672,7 +3129,7 @@
                 if (e.key === "Escape") {
                     const lightbox = document.getElementById('lightbox');
                     if (lightbox && !lightbox.classList.contains('hidden')) {
-                        lightbox.classList.add('hidden');
+                        closeLightbox();
                         return;
                     }
                     const timetableModal = document.getElementById('timetable-modal');
@@ -2688,7 +3145,22 @@
                     const iosModal = document.getElementById('ios-install-modal');
                     if (iosModal && !iosModal.classList.contains('hidden')) {
                         closeIosInstallGuide();
+                        return;
                     }
+                    const reminderModal = document.getElementById('reminder-modal');
+                    if (reminderModal && !reminderModal.classList.contains('hidden')) {
+                        closeReminderSettings();
+                    }
+                }
+            });
+
+            // Prayer reminders: register the service worker up front (needed
+            // for real notifications), and if the user already enabled
+            // reminders in a previous visit, pick straight back up — no need
+            // to reopen the panel every time.
+            registerReminderServiceWorker().then(() => {
+                if (reminderSettings.enabled && 'Notification' in window && Notification.permission === 'granted') {
+                    startReminderChecking();
                 }
             });
 
