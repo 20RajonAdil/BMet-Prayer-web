@@ -1,10 +1,16 @@
 /* BMet Prayer — Service Worker
-   Scope: prayer-time notifications only. This file intentionally does NOT
-   cache/serve the site's pages or assets, so the live site (prayer times,
-   Qibla, Qur'an audio, everything) is never served stale from a cache —
-   every visit still loads the current version straight from GitHub Pages.
+   Scope: prayer-time notifications, plus the minimum real fetch handling
+   Chrome requires to consider this site "installable" (the automatic
+   "Install app" banner — the same one you get on weather.com — needs a
+   registered service worker with a genuine fetch handler; Chrome
+   specifically ignores empty/no-op ones, so this has to actually do
+   something). The strategy below is Network-First: it always tries the
+   real network first, so prayer times/Qibla/Qur'an audio/everything stay
+   live and current — a cached copy is only ever used as a fallback if the
+   network request genuinely fails (i.e. offline), never instead of a
+   working live response.
 
-   What this can and can't do, honestly:
+   What the notification side of this can and can't do, honestly:
    - While the site/PWA is open (including in a background tab, or the
      PWA running behind other apps), the page itself checks the clock
      against today's prayer times and calls registration.showNotification()
@@ -23,6 +29,7 @@
 const NOTIFIED_STORE = 'bmet-notified-store';
 const SETTINGS_STORE = 'bmet-settings-store';
 const DB_NAME = 'bmet-prayer-db';
+const RUNTIME_CACHE = 'bmet-runtime-v1';
 
 const PRAYER_MESSAGES = {
     Fajr: 'The day begins with remembrance. Time for Fajr.',
@@ -33,7 +40,37 @@ const PRAYER_MESSAGES = {
 };
 
 self.addEventListener('install', () => { self.skipWaiting(); });
-self.addEventListener('activate', (event) => { event.waitUntil(self.clients.claim()); });
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        Promise.all([
+            self.clients.claim(),
+            caches.keys().then((keys) =>
+                Promise.all(keys.filter((k) => k !== RUNTIME_CACHE).map((k) => caches.delete(k)))
+            )
+        ])
+    );
+});
+
+// Network-First: only touches same-origin GET requests, and only ever
+// falls back to a cached copy when the live network request fails. Every
+// cross-origin request (Aladhan prayer-time API, Leaflet map tiles,
+// Qur'an audio from the Internet Archive, Nominatim/ipapi.co, etc.) is
+// left completely untouched and goes straight to the network as normal.
+self.addEventListener('fetch', (event) => {
+    if (event.request.method !== 'GET') return;
+    const url = new URL(event.request.url);
+    if (url.origin !== self.location.origin) return;
+
+    event.respondWith(
+        fetch(event.request)
+            .then((response) => {
+                const copy = response.clone();
+                caches.open(RUNTIME_CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
+                return response;
+            })
+            .catch(() => caches.match(event.request))
+    );
+});
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
