@@ -2301,7 +2301,11 @@
         // just started and hasn't been announced yet today.
         function runReminderCheck() {
             if (!reminderSettings.enabled || Notification.permission !== 'granted') return;
-            if (!prayerTimesData) return;
+            // prayerTimesData starts as {} (truthy but empty) before the first
+            // successful fetch, so check for an actual value rather than just
+            // truthiness — otherwise this guard never actually catches the
+            // "not loaded yet" case it's meant to.
+            if (!prayerTimesData || !prayerTimesData.Fajr) return;
 
             const now = new Date();
             const dayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
