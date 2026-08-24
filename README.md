@@ -2,6 +2,8 @@
 
 A simple and modern Islamic prayer timetable website designed to help students and staff easily view daily prayer times.
 
+> **Disclaimer:** This is an independent student project built for BMet's prayer room. It is not an official BMet College website and is not affiliated with or endorsed by BMet College.
+
 ## Live Website
 
 https://20rajonadil.github.io/BMet-Prayer-web/
