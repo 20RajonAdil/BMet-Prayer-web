@@ -31,6 +31,8 @@ const SETTINGS_STORE = 'bmet-settings-store';
 const DB_NAME = 'bmet-prayer-db';
 const RUNTIME_CACHE = 'bmet-runtime-v2';
 const DATA_CACHE = 'bmet-data-v1';
+const AUDIO_CACHE = 'bmet-audio-v1';
+const AUDIO_HOST = 'archive.org';
 
 // Hosts worth keeping a stale-while-revalidate copy of: prayer-time /
 // Hijri lookups and Qur'an text. A cached response answers instantly
@@ -53,7 +55,7 @@ self.addEventListener('activate', (event) => {
         Promise.all([
             self.clients.claim(),
             caches.keys().then((keys) =>
-                Promise.all(keys.filter((k) => k !== RUNTIME_CACHE && k !== DATA_CACHE).map((k) => caches.delete(k)))
+                Promise.all(keys.filter((k) => k !== RUNTIME_CACHE && k !== DATA_CACHE && k !== AUDIO_CACHE).map((k) => caches.delete(k)))
             )
         ])
     );
@@ -68,19 +70,83 @@ async function staleWhileRevalidateData(request) {
     return cached || (await network) || new Response(JSON.stringify({ code: 0, offline: true }), { status: 503, headers: { 'Content-Type': 'application/json' } });
 }
 
+/* Recitation audio (archive.org). Each surah track is fetched in full
+   exactly once — either by the background "save all recitation for
+   offline" pass, or the first time someone plays it — and kept as a
+   complete file in AUDIO_CACHE, keyed by URL with the Range header
+   stripped. Actual playback requests a byte range (that's how the
+   <audio> element supports seeking), so a cached full file is sliced by
+   hand into a proper 206 Partial Content response for those. Requires
+   the <audio> element to be crossorigin="anonymous" so these are real
+   readable responses rather than opaque ones the worker can't inspect. */
+async function serveAudioWithRange(request) {
+    const cache = await caches.open(AUDIO_CACHE);
+    const cacheKey = request.url.split('#')[0];
+    const cached = await cache.match(cacheKey);
+    const rangeHeader = request.headers.get('range');
+
+    if (cached) {
+        if (!rangeHeader) return cached.clone();
+        try {
+            const buffer = await cached.clone().arrayBuffer();
+            const total = buffer.byteLength;
+            if (total === 0) throw new Error('opaque-or-empty');
+            const m = /bytes=(\d+)-(\d+)?/.exec(rangeHeader);
+            const start = m ? parseInt(m[1], 10) : 0;
+            const end = m && m[2] ? Math.min(parseInt(m[2], 10), total - 1) : total - 1;
+            return new Response(buffer.slice(start, end + 1), {
+                status: 206,
+                statusText: 'Partial Content',
+                headers: {
+                    'Content-Type': cached.headers.get('Content-Type') || 'audio/ogg',
+                    'Content-Range': `bytes ${start}-${end}/${total}`,
+                    'Content-Length': String(end - start + 1),
+                    'Accept-Ranges': 'bytes',
+                },
+            });
+        } catch (e) {
+            // Cached response turned out unreadable (e.g. opaque) — treat as
+            // not cached and fall through to the network below.
+        }
+    }
+
+    if (!rangeHeader) {
+        // A plain, non-range request — this is how the background
+        // "save all recitation" pass fetches each surah, so cache the
+        // full response for offline playback afterwards.
+        try {
+            const res = await fetch(request);
+            if (res && res.ok) cache.put(cacheKey, res.clone());
+            return res;
+        } catch (e) {
+            return new Response('Offline', { status: 503, statusText: 'Offline' });
+        }
+    }
+
+    // Nothing cached yet and this is a normal ranged playback request —
+    // stream straight from the network as usual.
+    try { return await fetch(request); }
+    catch (e) { return new Response('Offline', { status: 503, statusText: 'Offline' }); }
+}
+
 // Network-First: only touches same-origin GET requests, and only ever
 // falls back to a cached copy when the live network request fails. Prayer-
 // time/Qur'an-text lookups get their own stale-while-revalidate handling
-// below; Leaflet map tiles and Qur'an recitation audio (archive.org) are
-// left completely untouched and go straight to the network as normal —
-// tiles are too many/too large to usefully precache, and audio already
-// has its own on-device caching once a surah has been played.
+// above, and recitation audio gets its own Range-aware caching above too.
+// Leaflet map tiles are the one thing left completely untouched, going
+// straight to the network as normal — there are simply too many of them,
+// covering too much of the globe, to usefully precache.
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
     const url = new URL(event.request.url);
 
     if (DATA_HOSTS.includes(url.hostname)) {
         event.respondWith(staleWhileRevalidateData(event.request));
+        return;
+    }
+
+    if (url.hostname === AUDIO_HOST) {
+        event.respondWith(serveAudioWithRange(event.request));
         return;
     }
 
