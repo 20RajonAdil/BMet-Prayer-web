@@ -1085,7 +1085,7 @@
                         </button>
                     </div>
                 </div>
-                <audio id="quranAudioEl" preload="none"></audio>
+                <audio id="quranAudioEl" preload="none" crossorigin="anonymous"></audio>
                 <div class="text-[11px] text-inksoft/70 mb-4">Continuous surah recitation by Qari Shakir Qasmi, streamed via the Internet Archive.</div>
                 <div id="ayahList"></div>
 
@@ -3321,6 +3321,29 @@
         window.addEventListener('load', () => setTimeout(ensureQuranTextOfflineBmet, 5000));
         window.addEventListener('online', ensureQuranTextOfflineBmet);
         langSelect.addEventListener('change', () => setTimeout(ensureQuranTextOfflineBmet, 1000));
+
+        // Silently save the full Qasmi recitation (all 114 surahs) for
+        // offline playback too — same idea as the text above, just a lot
+        // more data (a full continuous recitation typically runs several
+        // hundred MB), so this one starts later and goes one surah at a
+        // time rather than in parallel, to avoid choking a slow
+        // connection or a mobile data cap all at once.
+        let bmetAudioSaveInFlight = false;
+        function ensureAudioOfflineBmet() {
+            if (bmetAudioSaveInFlight || !navigator.onLine) return;
+            bmetAudioSaveInFlight = true;
+            (async () => {
+                for (let n = 1; n <= 114; n++) {
+                    const file = QASMI_AUDIO_FILES[n];
+                    if (!file) continue;
+                    try { await fetch(QASMI_AUDIO_BASE + file, { mode: 'cors' }); } catch (e) {}
+                    if (!navigator.onLine) break;
+                }
+                bmetAudioSaveInFlight = false;
+            })();
+        }
+        window.addEventListener('load', () => setTimeout(ensureAudioOfflineBmet, 15000));
+        window.addEventListener('online', ensureAudioOfflineBmet);
     </script>
 
 
