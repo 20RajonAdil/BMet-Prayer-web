@@ -29,7 +29,15 @@
 const NOTIFIED_STORE = 'bmet-notified-store';
 const SETTINGS_STORE = 'bmet-settings-store';
 const DB_NAME = 'bmet-prayer-db';
-const RUNTIME_CACHE = 'bmet-runtime-v1';
+const RUNTIME_CACHE = 'bmet-runtime-v2';
+const DATA_CACHE = 'bmet-data-v1';
+
+// Hosts worth keeping a stale-while-revalidate copy of: prayer-time /
+// Hijri lookups and Qur'an text. A cached response answers instantly
+// (and offline), while a background fetch quietly refreshes it whenever
+// there *is* a connection. Map tiles and recitation audio are
+// deliberately left alone below — see the fetch handler.
+const DATA_HOSTS = ['api.aladhan.com', 'api.alquran.cloud'];
 
 const PRAYER_MESSAGES = {
     Fajr: 'The day begins with remembrance. Time for Fajr.',
@@ -45,20 +53,37 @@ self.addEventListener('activate', (event) => {
         Promise.all([
             self.clients.claim(),
             caches.keys().then((keys) =>
-                Promise.all(keys.filter((k) => k !== RUNTIME_CACHE).map((k) => caches.delete(k)))
+                Promise.all(keys.filter((k) => k !== RUNTIME_CACHE && k !== DATA_CACHE).map((k) => caches.delete(k)))
             )
         ])
     );
 });
 
+async function staleWhileRevalidateData(request) {
+    const cache = await caches.open(DATA_CACHE);
+    const cached = await cache.match(request);
+    const network = fetch(request)
+        .then((res) => { if (res && res.ok) cache.put(request, res.clone()); return res; })
+        .catch(() => null);
+    return cached || (await network) || new Response(JSON.stringify({ code: 0, offline: true }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+}
+
 // Network-First: only touches same-origin GET requests, and only ever
-// falls back to a cached copy when the live network request fails. Every
-// cross-origin request (Aladhan prayer-time API, Leaflet map tiles,
-// Qur'an audio from the Internet Archive, Nominatim/ipapi.co, etc.) is
-// left completely untouched and goes straight to the network as normal.
+// falls back to a cached copy when the live network request fails. Prayer-
+// time/Qur'an-text lookups get their own stale-while-revalidate handling
+// below; Leaflet map tiles and Qur'an recitation audio (archive.org) are
+// left completely untouched and go straight to the network as normal —
+// tiles are too many/too large to usefully precache, and audio already
+// has its own on-device caching once a surah has been played.
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
     const url = new URL(event.request.url);
+
+    if (DATA_HOSTS.includes(url.hostname)) {
+        event.respondWith(staleWhileRevalidateData(event.request));
+        return;
+    }
+
     if (url.origin !== self.location.origin) return;
 
     event.respondWith(
