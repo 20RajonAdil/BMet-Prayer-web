@@ -83,3 +83,7 @@ GitHub: https://github.com/20RajonAdil
 ## Disclaimer
 
 This project is provided "AS IS" without warranty of any kind. Prayer times should be verified with your local mosque or Islamic authority when accuracy is critical.
+
+## Offline support
+
+This app works fully offline as a PWA — it caches itself for offline use automatically, no manual download step required.
