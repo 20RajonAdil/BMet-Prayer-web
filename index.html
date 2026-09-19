@@ -1898,8 +1898,7 @@
         // mosques publish (a known, documented difference between the tabular
         // and Umm al-Qura systems), so this keeps it lined up with what people
         // actually expect to see day-to-day.
-        function gregorianToHijri(date) {
-            const shifted = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+        function gregorianToHijri(date) {            const shifted = new Date(date.getTime() + 24 * 60 * 60 * 1000);
             const y = shifted.getFullYear();
             const m = shifted.getMonth() + 1;
             const d = shifted.getDate();
@@ -1943,6 +1942,62 @@
                 console.log("Could not compute Hijri date:", e.message);
                 hijriEl.textContent = "";
             }
+        }
+
+        // ---- Offline fallback: compute prayer times locally when the
+        // Aladhan API can't be reached (no internet, or blocked request).
+        // Sun-angle formulas — ISNA angles (15°/15°) to match method=2,
+        // used online — with Asr shadow factor following the selected
+        // madhab, so the fallback matches the live numbers as closely as
+        // a pure calculation can, rather than one fixed Birmingham guess
+        // that's wrong for every other day/location/DST.
+        function julianDayBmet(date) {
+            const y = date.getFullYear(), m = date.getMonth() + 1, d = date.getDate();
+            const a = Math.floor((14 - m) / 12), yy = y + 4800 - a, mm = m + 12 * a - 3;
+            return d + Math.floor((153 * mm + 2) / 5) + 365 * yy + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) - 32045;
+        }
+        function sunPositionBmet(jd) {
+            const D = jd - 2451545.0;
+            const g = (357.529 + 0.98560028 * D) % 360;
+            const q = (280.459 + 0.98564736 * D) % 360;
+            const gRad = g * Math.PI / 180;
+            const L = (q + 1.915 * Math.sin(gRad) + 0.020 * Math.sin(2 * gRad)) % 360;
+            const e = 23.439 - 0.00000036 * D;
+            const eRad = e * Math.PI / 180, lRad = L * Math.PI / 180;
+            const declination = Math.asin(Math.sin(eRad) * Math.sin(lRad)) * 180 / Math.PI;
+            let ra = Math.atan2(Math.cos(eRad) * Math.sin(lRad), Math.cos(lRad)) * 180 / Math.PI / 15;
+            ra = ((ra % 24) + 24) % 24;
+            return { declination, eqt: q / 15 - ra };
+        }
+        function sunAngleTimeBmet(angleDeg, jd, lat, lon, direction) {
+            const rad = Math.PI / 180;
+            const { declination, eqt } = sunPositionBmet(jd);
+            const ratio = (-Math.sin(angleDeg * rad) - Math.sin(lat * rad) * Math.sin(declination * rad)) / (Math.cos(lat * rad) * Math.cos(declination * rad));
+            if (ratio < -1 || ratio > 1) return null;
+            const t = Math.acos(ratio) / rad / 15;
+            const noon = 12 - lon / 15 - eqt;
+            return noon + direction * t;
+        }
+        function computePrayerTimesLocalBmet(date, lat, lon, hanafiAsr) {
+            const jd = julianDayBmet(date);
+            const { declination } = sunPositionBmet(jd);
+            const noon = 12 - lon / 15 - sunPositionBmet(jd).eqt;
+            const asrFactor = hanafiAsr ? 2 : 1;
+            const asrAngle = 90 - Math.atan(1 / (asrFactor + Math.tan(Math.abs(lat - declination) * Math.PI / 180))) * 180 / Math.PI;
+            const raw = {
+                Fajr: sunAngleTimeBmet(15, jd, lat, lon, -1),
+                Dhuhr: noon,
+                Asr: sunAngleTimeBmet(asrAngle, jd, lat, lon, 1),
+                Maghrib: sunAngleTimeBmet(0.833, jd, lat, lon, 1),
+                Isha: sunAngleTimeBmet(15, jd, lat, lon, 1),
+            };
+            const fmt = (h) => {
+                if (h == null) return '--:--';
+                h = ((h % 24) + 24) % 24;
+                const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+                return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+            };
+            const out = {}; for (const k in raw) out[k] = fmt(raw[k]); return out;
         }
 
         // Fetch prayer times (supports city or coordinates)
@@ -2029,23 +2084,18 @@
                 }
             } catch (error) {
                 // Network/API issue — fail silently in the console and fall back to
-                // approximate times below; the on-page banner already tells the user.
-
-                // Fallback times (Birmingham approximate) so the page still works offline
-                // or if this preview environment blocks outbound network requests.
-                prayerTimesData = {
-                    "Fajr": "03:45",
-                    "Dhuhr": "13:10",
-                    "Asr": "17:25",
-                    "Maghrib": "21:30",
-                    "Isha": "23:00"
-                };
+                // a real locally-computed estimate below, using the person's own
+                // coordinates when we have them (Birmingham's if not), so this is
+                // right for *today's* actual sunrise/sunset rather than one fixed
+                // guess that's wrong on every day except the one it was written for.
+                const fallbackCoords = currentCoords || { lat: 52.4862, lon: -1.8904 }; // Birmingham
+                prayerTimesData = computePrayerTimesLocalBmet(new Date(), fallbackCoords.lat, fallbackCoords.lon, madhab === 'hanafi');
                 isLoadingPrayerTimes = false;
 
                 if (locationLabel) {
                     locationLabel.innerHTML = `
                         <i class="fa-solid fa-triangle-exclamation fa-xs text-clay"></i>
-                        <span>Using offline fallback times</span>
+                        <span>Offline estimate${currentCoords ? '' : ' • Birmingham'}</span>
                     `;
                 }
 
@@ -3084,7 +3134,28 @@
                         </tr>`;
                 }).join('');
             } catch (e) {
-                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-clay text-sm"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Could not load the live weekly timetable. Check your connection and try again.</td></tr>`;
+                // No network — render the same 7 days from the local calculation
+                // instead of leaving the whole table blank.
+                const fc = useCoords ? currentCoords : { lat: 52.4862, lon: -1.8904 };
+                tbody.innerHTML = days.map((d, i) => {
+                    const t = computePrayerTimesLocalBmet(d, fc.lat, fc.lon, madhab === 'hanafi');
+                    const dayName = d.toLocaleDateString('en-GB', { weekday: 'long' });
+                    const isFriday = d.getDay() === 5;
+                    const isToday = i === 0;
+                    const dhuhrCell = isFriday
+                        ? `<span class="text-brass font-semibold">${formatTime12(t.Dhuhr)}</span> <span class="text-[10px] uppercase tracking-wide text-brass">Jumu'ah</span>`
+                        : formatTime12(t.Dhuhr);
+                    return `
+                        <tr class="${isToday ? 'bg-paper2/60' : ''}">
+                            <td class="py-3 font-medium">${dayName}${isToday ? ' <span class="text-brass text-[10px] uppercase align-middle">Today</span>' : ''}</td>
+                            <td>${formatTime12(t.Fajr)}</td>
+                            <td>${dhuhrCell}</td>
+                            <td>${formatTime12(t.Asr)}</td>
+                            <td>${formatTime12(t.Maghrib)}</td>
+                            <td>${formatTime12(t.Isha)}</td>
+                        </tr>`;
+                }).join('');
+                if (subtitle) subtitle.textContent = 'Offline estimate' + (useCoords ? '' : ' for Birmingham, UK');
             }
         }
 
@@ -3224,6 +3295,32 @@
         }
 
         window.onload = initializeWebsite;
+
+        // Silently save the full Qur'an text (all 114 surahs, Arabic + the
+        // selected translation) in the background once the essentials have
+        // loaded — no button, no prompt. The service worker's DATA_HOSTS
+        // stale-while-revalidate cache (see sw.js) then keeps these
+        // responses for offline reading. Re-runs if the device reconnects
+        // or the translation language is changed.
+        let bmetTextSaveInFlight = false;
+        function ensureQuranTextOfflineBmet() {
+            if (bmetTextSaveInFlight || !navigator.onLine) return;
+            bmetTextSaveInFlight = true;
+            const edition = langSelect.value;
+            (async () => {
+                for (let n = 1; n <= 114; n++) {
+                    try {
+                        await fetch(`${QURAN_API}/surah/${n}/${ARABIC_EDITION}`);
+                        await fetch(`${QURAN_API}/surah/${n}/${edition}`);
+                    } catch (e) {}
+                    if (!navigator.onLine) break;
+                }
+                bmetTextSaveInFlight = false;
+            })();
+        }
+        window.addEventListener('load', () => setTimeout(ensureQuranTextOfflineBmet, 5000));
+        window.addEventListener('online', ensureQuranTextOfflineBmet);
+        langSelect.addEventListener('change', () => setTimeout(ensureQuranTextOfflineBmet, 1000));
     </script>
 
 
