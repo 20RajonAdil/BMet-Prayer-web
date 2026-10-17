@@ -115,6 +115,11 @@
         .apply-banner-title span { color: #F0CD6E; }
         .apply-banner-sub { font-weight: 600; font-size: 0.95rem; line-height: 1.45; color: #EAF3EE; margin: 0; }
         .apply-banner-sub b { color: #F0CD6E; font-weight: 800; }
+        .apply-banner-list { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; padding: 0; }
+        .apply-banner-list li { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px 5px 6px; border-radius: 999px;
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(240,205,110,0.55); color: #FFFFFF; font-weight: 700; font-size: 0.85rem; }
+        .apply-banner-list li span { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+            border-radius: 50%; background: #D4A93C; color: #1B1405; font-weight: 800; font-size: 0.75rem; }
         .apply-banner-btn {
             flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
             padding: 15px 28px; border-radius: 999px; text-decoration: none;
@@ -777,7 +782,14 @@
                 <div class="apply-banner-text">
                     <span class="apply-banner-tag">We need your support</span>
                     <h2 class="apply-banner-title">Apply for a <span>Bigger Prayer Room</span> for Friday</h2>
-                    <p class="apply-banner-sub">Our current prayer room can't hold everyone for Jumu'ah. Help us get the ground floor hall for Friday prayer by signing the petition &mdash; it takes about <b>2 minutes</b>: just your <b>full name</b>, <b>student ID number</b>, <b>course name</b>, <b>course year</b> and <b>date</b>.</p>
+                    <p class="apply-banner-sub">Our current prayer room can't hold everyone for Jumu'ah. Help us get the ground floor hall for Friday prayer by signing the petition &mdash; it takes about <b>2 minutes</b>. You will need:</p>
+                    <ol class="apply-banner-list">
+                        <li><span>1</span>Full Name</li>
+                        <li><span>2</span>Student ID Number</li>
+                        <li><span>3</span>Course Name</li>
+                        <li><span>4</span>Course Year</li>
+                        <li><span>5</span>Date</li>
+                    </ol>
                 </div>
                 <a class="apply-banner-btn" href="https://docs.google.com/forms/d/e/1FAIpQLSeC0ynUwFmYQbd1mRk1TpNdMAYCSPXTtoW_hB1fM8-WlUtjxw/viewform?usp=sharing" target="_blank" rel="noopener noreferrer">
                     <i class="fa-solid fa-pen-to-square"></i> Apply Now &mdash; Click Here
