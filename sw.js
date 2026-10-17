@@ -32,7 +32,7 @@ const SETTINGS_STORE = 'bmet-settings-store';
 const DB_NAME = 'bmet-prayer-db';
 const SHELL_CACHE = 'bmet-shell-v3';      // the app itself (HTML, icons, images, CSS)
 const RUNTIME_CACHE = 'bmet-runtime-v3';  // other same-origin files, refreshed whenever online
-const CDN_CACHE = 'bmet-cdn-v1';          // Font Awesome, Leaflet, Google Fonts
+const CDN_CACHE = 'bmet-cdn-v2';          // Font Awesome, Leaflet, Google Fonts
 const DATA_CACHE = 'bmet-data-v1';
 const AUDIO_CACHE = 'bmet-audio-v1';
 const AUDIO_HOST = 'archive.org';
@@ -55,7 +55,8 @@ const CDN_FILES = [
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-brands-400.woff2',
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap'
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap',
+    'https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Lateef:wght@400;700&family=Reem+Kufi:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Harmattan:wght@400;700&family=Markazi+Text:wght@400;500;600;700&family=Cairo:wght@400;600;700&family=Rakkas&display=swap'
 ];
 const CDN_HOSTS = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 const NETWORK_TIMEOUT_MS = 5000; // on a weak/captive connection, give up and use the saved copy
@@ -79,7 +80,7 @@ self.addEventListener('install', (event) => {
         const shell = await caches.open(SHELL_CACHE);
         await Promise.allSettled(SHELL_FILES.map((f) => shell.add(new Request(f, { cache: 'reload' }))));
         const cdn = await caches.open(CDN_CACHE);
-        await Promise.allSettled(CDN_FILES.map((u) => cdn.add(new Request(u, { mode: 'no-cors' }))));
+        await Promise.allSettled(CDN_FILES.map((u) => cdn.add(new Request(u, { mode: 'cors' }))));
         await self.skipWaiting();
     })());
 });
@@ -110,7 +111,7 @@ async function networkFirst(request, cacheName, timeoutMs) {
         if (cacheable(res)) cache.put(request, res.clone()).catch(() => {});
         return res;
     } catch (e) {
-        const cached = await cache.match(request, { ignoreSearch: false });
+        const cached = await cache.match(request, { ignoreVary: true });
         if (cached) return cached;
         throw e;
     }

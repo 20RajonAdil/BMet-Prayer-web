@@ -137,6 +137,24 @@
         }
         @media (prefers-reduced-motion: reduce) { .apply-banner { animation: none; } }
 
+        /* ---- Offline Qur'an panel ---- */
+        .offline-panel { background:#FFFFFF; border:1px solid #D9D4C0; border-radius:20px; padding:18px 20px; margin-bottom:20px; }
+        .offline-panel h3 { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.05rem; margin:0 0 2px; color:#16231D; }
+        .offline-panel .op-sub { font-size:12px; color:#5B6B63; margin:0 0 12px; }
+        .op-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:12px 0; border-top:1px solid #ECE8D8; }
+        .op-info { flex:1 1 240px; min-width:0; }
+        .op-title { font-weight:600; font-size:14px; color:#16231D; }
+        .op-status { font-size:12px; color:#5B6B63; margin-top:2px; }
+        .op-status.ok { color:#0E4B3A; font-weight:600; }
+        .op-bar { height:6px; border-radius:999px; background:#ECE8D8; overflow:hidden; margin-top:8px; display:none; }
+        .op-bar > i { display:block; height:100%; width:0; background:linear-gradient(90deg,#0E4B3A,#A9812E); transition:width .2s; }
+        .op-btns { display:flex; gap:8px; flex-wrap:wrap; }
+        .op-btn { padding:9px 16px; border-radius:999px; font-size:13px; font-weight:600; border:1px solid #D9D4C0; background:#fff; color:#16231D; cursor:pointer; }
+        .op-btn.primary { background:#0E4B3A; color:#F3F1E6; border-color:#0E4B3A; }
+        .op-btn.danger { color:#9A3B2B; }
+        .op-btn:disabled { opacity:.55; cursor:default; }
+        .op-foot { font-size:11px; color:#5B6B63; margin-top:8px; }
+
         /* Subtle "living" glow on the live countdown */
         #countdown-timer { animation: countdownGlow 3.2s ease-in-out infinite; }
         @keyframes countdownGlow {
@@ -1116,6 +1134,34 @@
                     <select id="arabicFontSelect" class="px-3 py-2.5 rounded-full bg-white border border-line text-sm focus:outline-none focus:ring-2 focus:ring-brass/30"></select>
                 </div>
 
+                <div class="offline-panel" id="offlinePanel">
+                    <h3><i class="fa-solid fa-cloud-arrow-down"></i> Use the Qur'an offline</h3>
+                    <p class="op-sub">Download while you're online, then read and listen anywhere with no internet.</p>
+                    <div class="op-row">
+                        <div class="op-info">
+                            <div class="op-title">Qur'an text <span style="font-weight:400;color:#5B6B63;">(Arabic + <span id="opTransName">translation</span> + Arabic fonts)</span></div>
+                            <div class="op-status" id="opTextStatus">Checking…</div>
+                            <div class="op-bar" id="opTextBar"><i></i></div>
+                        </div>
+                        <div class="op-btns">
+                            <button class="op-btn primary" id="opTextBtn">Download text</button>
+                            <button class="op-btn danger" id="opTextRemove" style="display:none;">Remove</button>
+                        </div>
+                    </div>
+                    <div class="op-row">
+                        <div class="op-info">
+                            <div class="op-title">Recitation audio <span style="font-weight:400;color:#5B6B63;">(Qari Shakir Qasmi)</span></div>
+                            <div class="op-status" id="opAudioStatus">Checking…</div>
+                            <div class="op-bar" id="opAudioBar"><i></i></div>
+                        </div>
+                        <div class="op-btns">
+                            <button class="op-btn primary" id="opAudioBtn">Download all audio</button>
+                            <button class="op-btn danger" id="opAudioRemove" style="display:none;">Remove</button>
+                        </div>
+                    </div>
+                    <div class="op-foot">Audio files are large &mdash; use Wi-Fi. You can also save a single surah using the <b>Download audio</b> button when reading it. <span id="opStorage"></span></div>
+                </div>
+
                 <div id="resumeBanner" style="display:none;"></div>
 
                 <div id="surahGrid" class="surah-grid">
@@ -1136,6 +1182,10 @@
                                 class="flex items-center gap-x-2 px-4 py-2 text-sm font-medium rounded-full bg-green text-paper hover:bg-green-deep transition-colors">
                             <svg class="icon-btn-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
                             <span>Play Surah</span>
+                        </button>
+                        <button id="dlSurahAudioBtn" title="Save this surah's recitation for offline listening"
+                                class="flex items-center gap-x-2 px-4 py-2 text-sm font-medium rounded-full bg-white hover:bg-paper2 border border-line transition-colors">
+                            <i class="fa-solid fa-download"></i><span>Download audio</span>
                         </button>
                         <button id="closeReader"
                                 class="flex items-center gap-x-2 px-4 py-2 text-sm font-medium rounded-full bg-white hover:bg-paper2 border border-line transition-colors">
@@ -1802,6 +1852,7 @@
             quranAudioWantsPlay = false;
             quranAudioEl.src = file ? (QASMI_AUDIO_BASE + encodeURIComponent(file)) : '';
             setSurahAudioButtonState('idle');
+            refreshSurahDownloadBtn(number);
         }
         function stopAudio() {
             quranAudioWantsPlay = false;
@@ -3462,54 +3513,252 @@
 
         window.onload = initializeWebsite;
 
-        // Silently save the full Qur'an text (all 114 surahs, Arabic + the
-        // selected translation) in the background once the essentials have
-        // loaded — no button, no prompt. The service worker's DATA_HOSTS
-        // stale-while-revalidate cache (see sw.js) then keeps these
-        // responses for offline reading. Re-runs if the device reconnects
-        // or the translation language is changed.
-        let bmetTextSaveInFlight = false;
-        function ensureQuranTextOfflineBmet() {
-            if (bmetTextSaveInFlight || !navigator.onLine) return;
-            bmetTextSaveInFlight = true;
-            const edition = langSelect.value;
-            (async () => {
-                for (let n = 1; n <= 114; n++) {
-                    try {
-                        await fetch(`${QURAN_API}/surah/${n}/${ARABIC_EDITION}`);
-                        await fetch(`${QURAN_API}/surah/${n}/${edition}`);
-                    } catch (e) {}
-                    if (!navigator.onLine) break;
-                }
-                bmetTextSaveInFlight = false;
-            })();
-        }
-        window.addEventListener('load', () => setTimeout(ensureQuranTextOfflineBmet, 5000));
-        window.addEventListener('online', ensureQuranTextOfflineBmet);
-        langSelect.addEventListener('change', () => setTimeout(ensureQuranTextOfflineBmet, 1000));
+        /* ================= Offline Qur'an manager =================
+           Nothing is downloaded until the person taps a button. Text goes
+           into the data cache the service worker already reads from, audio
+           into the audio cache, so everything keeps working with no internet. */
+        const OFF_DATA_CACHE = 'bmet-data-v1';
+        const OFF_AUDIO_CACHE = 'bmet-audio-v1';
+        const OFF_CDN_CACHE = 'bmet-cdn-v2';
+        const OFF_FONT_CSS = [
+            'https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Lateef:wght@400;700&family=Reem+Kufi:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Harmattan:wght@400;700&family=Markazi+Text:wght@400;500;600;700&family=Cairo:wght@400;600;700&family=Rakkas&display=swap',
+            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap'
+        ];
+        const $ = (id) => document.getElementById(id);
+        let offTextBusy = false, offAudioBusy = false, offAudioCancel = false, offSurahBusy = false;
 
-        // Silently save the full Qasmi recitation (all 114 surahs) for
-        // offline playback too — same idea as the text above, just a lot
-        // more data (a full continuous recitation typically runs several
-        // hundred MB), so this one starts later and goes one surah at a
-        // time rather than in parallel, to avoid choking a slow
-        // connection or a mobile data cap all at once.
-        let bmetAudioSaveInFlight = false;
-        function ensureAudioOfflineBmet() {
-            if (bmetAudioSaveInFlight || !navigator.onLine) return;
-            bmetAudioSaveInFlight = true;
-            (async () => {
-                for (let n = 1; n <= 114; n++) {
-                    const file = QASMI_AUDIO_FILES[n];
-                    if (!file) continue;
-                    try { await fetch(QASMI_AUDIO_BASE + file, { mode: 'cors' }); } catch (e) {}
-                    if (!navigator.onLine) break;
-                }
-                bmetAudioSaveInFlight = false;
-            })();
+        const audioKeyUrl = (n, mp3) => {
+            const f = QASMI_AUDIO_FILES[n]; if (!f) return null;
+            return QASMI_AUDIO_BASE + encodeURIComponent(mp3 ? f.replace(/\.ogg$/i, '.mp3') : f);
+        };
+        function requestPersistentStorage() {
+            try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
         }
-        window.addEventListener('load', () => setTimeout(ensureAudioOfflineBmet, 15000));
-        window.addEventListener('online', ensureAudioOfflineBmet);
+        async function swReady() {
+            if (!('serviceWorker' in navigator)) return false;
+            try {
+                await Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(r, 4000))]);
+                if (!navigator.serviceWorker.controller) await new Promise(r => setTimeout(r, 1200));
+            } catch (e) {}
+            return !!navigator.serviceWorker.controller;
+        }
+        function setBar(id, frac) {
+            const bar = $(id); if (!bar) return;
+            bar.style.display = frac == null ? 'none' : 'block';
+            if (frac != null) bar.firstElementChild.style.width = Math.round(frac * 100) + '%';
+        }
+        async function pool(items, limit, worker) {
+            let i = 0, done = 0;
+            await Promise.all(Array.from({ length: limit }, async () => {
+                while (i < items.length) { const item = items[i++]; await worker(item); done++; }
+            }));
+            return done;
+        }
+
+        async function countTextSaved(edition) {
+            const c = await caches.open(OFF_DATA_CACHE);
+            const hits = await Promise.all(Array.from({ length: 114 }, (_, k) => c.match(`${QURAN_API}/surah/${k + 1}/${edition}`, { ignoreVary: true })));
+            return hits.filter(Boolean).length;
+        }
+        async function countAudioSaved() {
+            const c = await caches.open(OFF_AUDIO_CACHE);
+            const saved = new Set();
+            await Promise.all(Array.from({ length: 114 }, async (_, k) => {
+                const n = k + 1; const u1 = audioKeyUrl(n), u2 = audioKeyUrl(n, true);
+                if (!u1) return;
+                if ((await c.match(u1)) || (await c.match(u2))) saved.add(n);
+            }));
+            return saved;
+        }
+
+        async function refreshOfflinePanel() {
+            if (!('caches' in window)) { $('opTextStatus').textContent = 'Offline saving is not supported in this browser.'; return; }
+            const edition = langSelect.value;
+            const opt = langSelect.selectedOptions[0];
+            $('opTransName').textContent = opt ? opt.textContent : 'translation';
+            try {
+                const [ar, tr, audio] = await Promise.all([countTextSaved(ARABIC_EDITION), countTextSaved(edition), countAudioSaved()]);
+                const textDone = ar === 114 && tr === 114;
+                const ts = $('opTextStatus');
+                ts.className = 'op-status' + (textDone ? ' ok' : '');
+                ts.textContent = textDone ? 'Saved on this device ✓ — works offline'
+                    : (ar || tr ? `Partly saved (Arabic ${ar}/114, translation ${tr}/114)` : 'Not downloaded yet');
+                if (!offTextBusy) $('opTextBtn').textContent = textDone ? 'Re-download text' : 'Download text';
+                $('opTextRemove').style.display = (ar || tr) ? '' : 'none';
+                const as = $('opAudioStatus');
+                as.className = 'op-status' + (audio.size === 114 ? ' ok' : '');
+                as.textContent = audio.size === 114 ? 'All 114 surahs saved ✓ — plays offline'
+                    : (audio.size ? `${audio.size} of 114 surahs saved for offline` : 'Not downloaded yet');
+                if (!offAudioBusy) $('opAudioBtn').textContent = audio.size === 114 ? 'All saved' : (audio.size ? 'Download the rest' : 'Download all audio');
+                if (!offAudioBusy) $('opAudioBtn').disabled = audio.size === 114;
+                $('opAudioRemove').style.display = audio.size ? '' : 'none';
+                if (navigator.storage && navigator.storage.estimate) {
+                    const est = await navigator.storage.estimate();
+                    if (est && est.usage) $('opStorage').textContent = `Saved data on this device: ${(est.usage / 1048576).toFixed(0)} MB.`;
+                }
+            } catch (e) {}
+            refreshSurahDownloadBtn(currentSurahNumber);
+        }
+
+        async function warmArabicFonts() {
+            const cdn = await caches.open(OFF_CDN_CACHE);
+            for (const cssUrl of OFF_FONT_CSS) {
+                try {
+                    const res = await fetch(cssUrl, { mode: 'cors' });
+                    if (!res.ok) continue;
+                    await cdn.put(cssUrl, res.clone());
+                    const css = await res.text();
+                    const urls = [...css.matchAll(/url\((https:[^)]+)\)/g)].map(m => m[1]);
+                    await pool(urls, 4, async (u) => {
+                        try {
+                            if (await cdn.match(u)) return;
+                            const fr = await fetch(u, { mode: 'cors' });
+                            if (fr.ok) await cdn.put(u, fr);
+                        } catch (e) {}
+                    });
+                } catch (e) {}
+            }
+        }
+
+        async function downloadQuranText() {
+            if (offTextBusy) return;
+            if (!navigator.onLine) { showToast('You need to be online to download.'); return; }
+            offTextBusy = true; requestPersistentStorage();
+            const btn = $('opTextBtn'); btn.disabled = true;
+            const edition = langSelect.value;
+            const jobs = [];
+            for (let n = 1; n <= 114; n++) { jobs.push(`${QURAN_API}/surah/${n}/${ARABIC_EDITION}`); jobs.push(`${QURAN_API}/surah/${n}/${edition}`); }
+            jobs.push(`${QURAN_API}/surah`);
+            const cache = await caches.open(OFF_DATA_CACHE);
+            let done = 0, failed = 0;
+            btn.textContent = 'Downloading… 0%'; setBar('opTextBar', 0);
+            await pool(jobs, 4, async (url) => {
+                let ok = false;
+                for (let attempt = 0; attempt < 3 && !ok; attempt++) {
+                    try {
+                        const res = await fetch(url);
+                        if (res.ok) {
+                            const j = await res.clone().json();
+                            if (j && j.code === 200) { await cache.put(url, res); ok = true; }
+                        }
+                    } catch (e) {}
+                    if (!ok) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+                }
+                if (!ok) failed++;
+                done++;
+                const f = done / (jobs.length + 1);
+                btn.textContent = `Downloading… ${Math.round(f * 100)}%`; setBar('opTextBar', f);
+            });
+            btn.textContent = 'Saving fonts…';
+            await warmArabicFonts();
+            setBar('opTextBar', null);
+            offTextBusy = false; btn.disabled = false;
+            await refreshOfflinePanel();
+            showToast(failed ? `Saved with ${failed} missing — tap Download again to finish.` : 'Qur\'an text saved — it now works offline.');
+        }
+
+        async function downloadSurahAudio(n, onProgress) {
+            const cache = await caches.open(OFF_AUDIO_CACHE);
+            const controlled = await swReady();
+            for (const mp3 of [false, true]) {
+                const url = audioKeyUrl(n, mp3);
+                if (!url) return false;
+                if (await cache.match(url)) return true;
+                try {
+                    const res = await fetch(url, { mode: 'cors' });
+                    if (!res.ok) continue;
+                    if (controlled) {
+                        // The service worker stores the full file as it streams through.
+                        const total = +res.headers.get('content-length') || 0;
+                        const reader = res.body.getReader(); let got = 0;
+                        for (;;) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            got += value.length;
+                            if (onProgress && total) onProgress(got / total);
+                            if (offAudioCancel) { try { reader.cancel(); } catch (e) {} return false; }
+                        }
+                        for (let i = 0; i < 20; i++) { if (await cache.match(url)) return true; await new Promise(r => setTimeout(r, 500)); }
+                    } else {
+                        await cache.put(url, res);
+                        if (await cache.match(url)) return true;
+                    }
+                } catch (e) {}
+            }
+            return false;
+        }
+
+        async function downloadAllAudio() {
+            if (offAudioBusy) { offAudioCancel = true; $('opAudioBtn').textContent = 'Stopping…'; return; }
+            if (!navigator.onLine) { showToast('You need to be online to download.'); return; }
+            const saved = await countAudioSaved();
+            const todo = []; for (let n = 1; n <= 114; n++) if (!saved.has(n) && QASMI_AUDIO_FILES[n]) todo.push(n);
+            if (!todo.length) return;
+            if (!confirm(`This will download ${todo.length} surah recitations — a very large download (likely several hundred MB or more). Wi-Fi is strongly recommended.\n\nContinue?`)) return;
+            offAudioBusy = true; offAudioCancel = false; requestPersistentStorage();
+            const btn = $('opAudioBtn'); btn.textContent = 'Stop download'; btn.disabled = false;
+            let i = 0, failed = 0;
+            for (const n of todo) {
+                if (offAudioCancel || !navigator.onLine) break;
+                $('opAudioStatus').textContent = `Downloading surah ${n}… (${i} of ${todo.length} done)`;
+                setBar('opAudioBar', i / todo.length);
+                const ok = await downloadSurahAudio(n, (f) => setBar('opAudioBar', (i + f) / todo.length));
+                if (!ok && !offAudioCancel) failed++;
+                i++;
+            }
+            const stopped = offAudioCancel || !navigator.onLine;
+            offAudioBusy = false; offAudioCancel = false; setBar('opAudioBar', null);
+            await refreshOfflinePanel();
+            showToast(stopped ? 'Download paused — tap again to continue where you left off.'
+                : failed ? `Saved with ${failed} missing — tap Download again to finish.` : 'All recitation saved for offline listening.');
+        }
+
+        async function refreshSurahDownloadBtn(n) {
+            const btn = $('dlSurahAudioBtn'); if (!btn || !n) return;
+            if (offSurahBusy) return;
+            const hasAudio = !!QASMI_AUDIO_FILES[n];
+            btn.style.display = hasAudio ? '' : 'none';
+            if (!hasAudio || !('caches' in window)) return;
+            try {
+                const c = await caches.open(OFF_AUDIO_CACHE);
+                const saved = !!((await c.match(audioKeyUrl(n))) || (await c.match(audioKeyUrl(n, true))));
+                btn.innerHTML = saved ? '<i class="fa-solid fa-circle-check"></i><span>Saved offline</span>' : '<i class="fa-solid fa-download"></i><span>Download audio</span>';
+                btn.dataset.saved = saved ? '1' : '';
+            } catch (e) {}
+        }
+        $('dlSurahAudioBtn').onclick = async () => {
+            const n = currentSurahNumber;
+            if (!n || offSurahBusy) return;
+            if (offAudioBusy) { showToast('The full audio download is already running.'); return; }
+            const btn = $('dlSurahAudioBtn');
+            if (btn.dataset.saved) { showToast('This surah is already saved for offline listening.'); return; }
+            if (!navigator.onLine) { showToast('You need to be online to download.'); return; }
+            offSurahBusy = true; requestPersistentStorage();
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Downloading… 0%</span>';
+            const ok = await downloadSurahAudio(n, (f) => { btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Downloading… ${Math.round(f * 100)}%</span>`; });
+            offSurahBusy = false;
+            await refreshSurahDownloadBtn(n);
+            if (!ok) showToast('Download failed — please check your connection and try again.');
+            refreshOfflinePanel();
+        };
+
+        $('opTextBtn').onclick = downloadQuranText;
+        $('opAudioBtn').onclick = downloadAllAudio;
+        $('opTextRemove').onclick = async () => {
+            if (!confirm('Remove the saved Qur\'an text from this device?')) return;
+            const c = await caches.open(OFF_DATA_CACHE);
+            const keys = await c.keys();
+            await Promise.all(keys.filter(r => r.url.startsWith(QURAN_API)).map(r => c.delete(r)));
+            refreshOfflinePanel();
+        };
+        $('opAudioRemove').onclick = async () => {
+            if (!confirm('Remove all saved recitation audio from this device?')) return;
+            await caches.delete(OFF_AUDIO_CACHE);
+            refreshOfflinePanel();
+        };
+        langSelect.addEventListener('change', () => setTimeout(refreshOfflinePanel, 200));
+        window.addEventListener('load', () => setTimeout(refreshOfflinePanel, 1500));
+        window.addEventListener('online', refreshOfflinePanel);
     </script>
 
 
