@@ -2495,7 +2495,8 @@
             REMINDER_PRAYERS.forEach(name => {
                 if (!reminderSettings.prayers[name]) return;
                 if (reminderSettings.notifiedList.includes(name)) return;
-                const raw = (prayerTimesData[name] || '').split(' ')[0];
+                let raw = (prayerTimesData[name] || '').split(' ')[0];
+                if (name === 'Dhuhr' && isJumuahMode()) raw = jumuahFor(now).first; // Friday: remind at the 1st Jumu'ah
                 if (!raw || !raw.includes(':')) return;
                 const [h, m] = raw.split(':').map(Number);
                 const prayerDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
@@ -3005,28 +3006,49 @@
             return new Date().getDay() === 5;
         }
         function displayPrayerName(name) {
+            if (name === 'Jumuah1') return "1st Jumu'ah";
+            if (name === 'Jumuah2') return "2nd Jumu'ah";
             return (name === 'Dhuhr' && isFridayToday()) ? "Jumu'ah" : name;
+        }
+
+        // Friday at BMet (default Birmingham view): the Dhuhr slot becomes two
+        // Jumu'ah congregations. People using their own GPS location elsewhere
+        // keep the normal Dhuhr time, since the college times don't apply there.
+        const JUMUAH_HOLD_MS = 2 * 60 * 1000; // after the 1st starts, wait 2 min, then count to the 2nd
+        function isJumuahMode() {
+            return isFridayToday() && currentLocationMode !== 'coords';
+        }
+        function jumuahDates() {
+            const now = new Date();
+            const j = jumuahFor(now);
+            const mk = (t) => { const [h, m] = t.split(':').map(Number); const d = new Date(now); d.setHours(h, m, 0, 0); return d; };
+            return { first: mk(j.first), second: mk(j.second) };
         }
 
         function calculateNextPrayer() {
             const now = new Date();
-            let foundNext = false;
-
+            // Build the schedule for today: [{ key, date, until }] where `until`
+            // is when the countdown should move on to the following entry.
+            const entries = [];
             for (const [name, timeStr] of Object.entries(prayerTimesData)) {
-                const prayerTime = parseTimeToDate(timeStr);
-                if (prayerTime > now) {
-                    nextPrayerName = name;
-                    nextPrayerDate = prayerTime;
-                    foundNext = true;
-                    break;
+                if (name === 'Dhuhr' && isJumuahMode()) {
+                    const jd = jumuahDates();
+                    entries.push({ key: 'Jumuah1', date: jd.first, until: new Date(jd.first.getTime() + JUMUAH_HOLD_MS) });
+                    entries.push({ key: 'Jumuah2', date: jd.second, until: jd.second });
+                } else {
+                    const d = parseTimeToDate(timeStr);
+                    entries.push({ key: name, date: d, until: d });
                 }
             }
 
-            if (!foundNext) {
+            const next = entries.find(e => e.until > now);
+            if (next) {
+                nextPrayerName = next.key;
+                nextPrayerDate = next.date;
+            } else {
                 nextPrayerName = "Fajr";
                 nextPrayerDate = parseTimeToDate(prayerTimesData["Fajr"], true);
             }
-
             return { name: nextPrayerName, date: nextPrayerDate };
         }
 
@@ -3039,13 +3061,22 @@
             const now = new Date();
             let current = null;
             let currentTime = null;
+            let windowEnd = null;
             for (const name of order) {
                 if (!prayerTimesData[name]) continue;
-                const t = parseTimeToDate(prayerTimesData[name]);
-                if (t <= now) { current = name; currentTime = t; }
+                let t = parseTimeToDate(prayerTimesData[name]);
+                let end = null;
+                if (name === 'Dhuhr' && isJumuahMode()) {
+                    // "Now" from the 1st Jumu'ah until 45 min after the 2nd begins.
+                    const jd = jumuahDates();
+                    t = jd.first;
+                    end = new Date(jd.second.getTime() + CURRENT_PRAYER_WINDOW_MS);
+                }
+                if (t <= now) { current = name; currentTime = t; windowEnd = end; }
             }
-            if (current && currentTime && (now - currentTime) > CURRENT_PRAYER_WINDOW_MS) {
-                return null;
+            if (current && currentTime) {
+                const limit = windowEnd || new Date(currentTime.getTime() + CURRENT_PRAYER_WINDOW_MS);
+                if (now > limit) return null;
             }
             return current;
         }
@@ -3060,6 +3091,7 @@
                 calculateNextPrayer();
                 diff = nextPrayerDate - now;
             }
+            if (diff < 0) diff = 0; // 2-minute pause after the 1st Jumu'ah begins
 
             const totalSeconds = Math.floor(diff / 1000);
             const hours = Math.floor(totalSeconds / 3600);
@@ -3105,7 +3137,8 @@
             };
 
             Object.entries(prayerTimesData).forEach(([name, time]) => {
-                const isNext = name === nextName;
+                const jumuahTile = (name === 'Dhuhr' && isJumuahMode());
+                const isNext = jumuahTile ? (nextName === 'Jumuah1' || nextName === 'Jumuah2') : name === nextName;
                 const isCurrent = name === currentName;
                 const isFridayDhuhr = (name === 'Dhuhr' && isFridayToday());
                 const label = displayPrayerName(name);
@@ -3121,7 +3154,7 @@
                         <i class="fa-solid ${iconClass} ${isCurrent ? 'text-brass-light' : 'text-green'}"></i>
                     </div>
                     <div class="font-display font-semibold ${isCurrent ? 'text-paper' : 'text-ink'}">${label}</div>
-                    <div class="countdown text-xl font-semibold mt-1 ${isCurrent ? 'text-paper' : 'text-ink'}">${formatTime12(time)}</div>
+                    <div class="countdown ${jumuahTile ? 'text-sm' : 'text-xl'} font-semibold mt-1 ${isCurrent ? 'text-paper' : 'text-ink'}">${jumuahTile ? jumuahPairText(new Date()) : formatTime12(time)}</div>
                     <div class="text-[10px] mt-1 uppercase tracking-wide ${isCurrent ? 'text-brass-light' : (isNext ? 'text-brass' : 'text-inksoft/0')}">${isCurrent ? 'Now' : (isNext ? 'Next' : '')}</div>
                 `;
 
