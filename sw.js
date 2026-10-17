@@ -1,6 +1,7 @@
 /* BMet Prayer — Service Worker
-   Scope: prayer-time notifications, plus the minimum real fetch handling
-   Chrome requires to consider this site "installable" (the automatic
+   Scope: full offline support (the app shell, icons, map code and fonts are
+   saved on first visit), prayer-time notifications, and the real fetch
+   handling Chrome requires to consider this site "installable" (the automatic
    "Install app" banner — the same one you get on weather.com — needs a
    registered service worker with a genuine fetch handler; Chrome
    specifically ignores empty/no-op ones, so this has to actually do
@@ -29,16 +30,40 @@
 const NOTIFIED_STORE = 'bmet-notified-store';
 const SETTINGS_STORE = 'bmet-settings-store';
 const DB_NAME = 'bmet-prayer-db';
-const RUNTIME_CACHE = 'bmet-runtime-v2';
+const SHELL_CACHE = 'bmet-shell-v3';      // the app itself (HTML, icons, images, CSS)
+const RUNTIME_CACHE = 'bmet-runtime-v3';  // other same-origin files, refreshed whenever online
+const CDN_CACHE = 'bmet-cdn-v1';          // Font Awesome, Leaflet, Google Fonts
 const DATA_CACHE = 'bmet-data-v1';
 const AUDIO_CACHE = 'bmet-audio-v1';
 const AUDIO_HOST = 'archive.org';
+const KEEP_CACHES = [SHELL_CACHE, RUNTIME_CACHE, CDN_CACHE, DATA_CACHE, AUDIO_CACHE];
 
-// Hosts worth keeping a stale-while-revalidate copy of: prayer-time /
-// Hijri lookups and Qur'an text. A cached response answers instantly
-// (and offline), while a background fetch quietly refreshes it whenever
-// there *is* a connection. Map tiles and recitation audio are
-// deliberately left alone below — see the fetch handler.
+// Everything needed to open and use the site with no connection at all.
+// Each file is cached on its own, so one missing file can never stop the
+// whole install.
+const SHELL_FILES = [
+    './', './index.html', './manifest.json', './tailwind.css',
+    './bmet-logo.png', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
+    './favicon.ico', './favicon-32x32.png', './favicon-16x16.png',
+    './Talha.png', './adil.png', './picture2.jpg'
+];
+// Third-party files the page needs to look and work right (icons, map code, fonts).
+const CDN_FILES = [
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-solid-900.woff2',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-regular-400.woff2',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-brands-400.woff2',
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap'
+];
+const CDN_HOSTS = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
+const NETWORK_TIMEOUT_MS = 5000; // on a weak/captive connection, give up and use the saved copy
+
+// Hosts whose answers should be remembered for offline use: prayer-time /
+// Hijri lookups and Qur'an text. Network-first, so the times shown are
+// always today's (important on the day the clocks change) — the saved copy
+// is only used if the network fails or is too slow.
 const DATA_HOSTS = ['api.aladhan.com', 'api.alquran.cloud'];
 
 const PRAYER_MESSAGES = {
@@ -49,25 +74,89 @@ const PRAYER_MESSAGES = {
     Isha: 'Close the day the way you opened it. Time for Isha.'
 };
 
-self.addEventListener('install', () => { self.skipWaiting(); });
+self.addEventListener('install', (event) => {
+    event.waitUntil((async () => {
+        const shell = await caches.open(SHELL_CACHE);
+        await Promise.allSettled(SHELL_FILES.map((f) => shell.add(new Request(f, { cache: 'reload' }))));
+        const cdn = await caches.open(CDN_CACHE);
+        await Promise.allSettled(CDN_FILES.map((u) => cdn.add(new Request(u, { mode: 'no-cors' }))));
+        await self.skipWaiting();
+    })());
+});
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         Promise.all([
             self.clients.claim(),
             caches.keys().then((keys) =>
-                Promise.all(keys.filter((k) => k !== RUNTIME_CACHE && k !== DATA_CACHE && k !== AUDIO_CACHE).map((k) => caches.delete(k)))
+                Promise.all(keys.filter((k) => !KEEP_CACHES.includes(k)).map((k) => caches.delete(k)))
             )
         ])
     );
 });
 
-async function staleWhileRevalidateData(request) {
-    const cache = await caches.open(DATA_CACHE);
+function withTimeout(promise, ms) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+    ]);
+}
+function cacheable(res) { return res && (res.ok || res.type === 'opaque'); }
+
+// Live answer first; saved copy if the network fails or is too slow.
+async function networkFirst(request, cacheName, timeoutMs) {
+    const cache = await caches.open(cacheName);
+    try {
+        const res = await withTimeout(fetch(request), timeoutMs);
+        if (cacheable(res)) cache.put(request, res.clone()).catch(() => {});
+        return res;
+    } catch (e) {
+        const cached = await cache.match(request, { ignoreSearch: false });
+        if (cached) return cached;
+        throw e;
+    }
+}
+
+async function dataRequest(request) {
+    try {
+        return await networkFirst(request, DATA_CACHE, 4000);
+    } catch (e) {
+        // Page treats a non-200 `code` as "unavailable" and falls back to its own on-device calculation.
+        return new Response(JSON.stringify({ code: 0, offline: true }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+    }
+}
+
+// Icons / map code / fonts never change at a given URL, so saved copy first.
+async function cdnRequest(request) {
+    const cache = await caches.open(CDN_CACHE);
     const cached = await cache.match(request);
-    const network = fetch(request)
-        .then((res) => { if (res && res.ok) cache.put(request, res.clone()); return res; })
-        .catch(() => null);
-    return cached || (await network) || new Response(JSON.stringify({ code: 0, offline: true }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+    if (cached) return cached;
+    try {
+        const res = await fetch(request);
+        if (cacheable(res)) cache.put(request, res.clone()).catch(() => {});
+        return res;
+    } catch (e) {
+        return new Response('', { status: 503, statusText: 'Offline' });
+    }
+}
+
+// The site's own files. Live when online, saved copy when not. Opening the
+// site (any address inside it) with no connection always gets the saved page.
+async function appRequest(request) {
+    try {
+        const res = await withTimeout(fetch(request), NETWORK_TIMEOUT_MS);
+        if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(request.mode === 'navigate' ? SHELL_CACHE : RUNTIME_CACHE).then((cache) => {
+                cache.put(request.mode === 'navigate' ? new Request('./index.html') : request, copy);
+            }).catch(() => {});
+        }
+        return res;
+    } catch (e) {
+        const cached = (await caches.match(request, { ignoreSearch: true })) ||
+                       (request.mode === 'navigate' ? (await caches.match('./index.html')) || (await caches.match('./')) : null);
+        if (cached) return cached;
+        return new Response('Offline', { status: 503, statusText: 'Offline' });
+    }
 }
 
 /* Recitation audio (archive.org). Each surah track is fetched in full
@@ -129,38 +218,18 @@ async function serveAudioWithRange(request) {
     catch (e) { return new Response('Offline', { status: 503, statusText: 'Offline' }); }
 }
 
-// Network-First: only touches same-origin GET requests, and only ever
-// falls back to a cached copy when the live network request fails. Prayer-
-// time/Qur'an-text lookups get their own stale-while-revalidate handling
-// above, and recitation audio gets its own Range-aware caching above too.
-// Leaflet map tiles are the one thing left completely untouched, going
-// straight to the network as normal — there are simply too many of them,
-// covering too much of the globe, to usefully precache.
+// Routing. Map tiles and anything else third-party (e.g. IP lookups) go
+// straight to the network untouched — far too many tiles to precache.
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
     const url = new URL(event.request.url);
 
-    if (DATA_HOSTS.includes(url.hostname)) {
-        event.respondWith(staleWhileRevalidateData(event.request));
-        return;
-    }
-
-    if (url.hostname === AUDIO_HOST) {
-        event.respondWith(serveAudioWithRange(event.request));
-        return;
-    }
-
+    if (DATA_HOSTS.includes(url.hostname)) { event.respondWith(dataRequest(event.request)); return; }
+    if (url.hostname === AUDIO_HOST) { event.respondWith(serveAudioWithRange(event.request)); return; }
+    if (CDN_HOSTS.includes(url.hostname)) { event.respondWith(cdnRequest(event.request)); return; }
     if (url.origin !== self.location.origin) return;
 
-    event.respondWith(
-        fetch(event.request)
-            .then((response) => {
-                const copy = response.clone();
-                caches.open(RUNTIME_CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
-                return response;
-            })
-            .catch(() => caches.match(event.request))
-    );
+    event.respondWith(appRequest(event.request));
 });
 
 self.addEventListener('notificationclick', (event) => {

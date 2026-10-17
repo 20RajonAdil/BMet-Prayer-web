@@ -565,11 +565,11 @@
             </span>
             <div class="overflow-hidden flex-1">
                 <div class="marquee-track">
-                    <span class="px-6">Jumu'ah prayer every Friday at 1:15 PM in MB 531 — please arrive early.</span>
+                    <span class="px-6 jumuah-notice">1st Jumu'ah 1:05 PM &amp; 2nd Jumu'ah 1:15 PM every Friday in MB 531 — please arrive early.</span>
                     <span class="px-6">Sisters' prayer room is on MB 532.</span>
                     <span class="px-6">Keep phones on silent inside the prayer room.</span>
                     <span class="px-6">New event posters go up regularly — check the Events section below.</span>
-                    <span class="px-6">Jumu'ah prayer every Friday at 1:15 PM in MB 531 — please arrive early.</span>
+                    <span class="px-6 jumuah-notice">1st Jumu'ah 1:05 PM &amp; 2nd Jumu'ah 1:15 PM every Friday in MB 531 — please arrive early.</span>
                     <span class="px-6">Sisters' prayer room is on MB 532.</span>
                     <span class="px-6">Keep phones on silent inside the prayer room.</span>
                     <span class="px-6">New event posters go up regularly — check the Events section below.</span>
@@ -962,8 +962,11 @@
                     <div class="font-display font-semibold text-xl">Upcoming Jumu'ah</div>
                 </div>
                 <div class="flex-1 flex flex-col justify-center text-center">
-                    <div class="font-display text-6xl font-bold text-ink tabular-nums tracking-tight">01:15<span class="text-2xl font-semibold text-inksoft ml-1">PM</span></div>
-                    <div class="mt-2 text-teal font-medium">Jumu'ah Prayer • Every Friday</div>
+                    <div class="text-teal font-medium text-sm">1st Jumu'ah</div>
+                    <div id="jumuah-first" class="font-display font-bold text-ink tabular-nums tracking-tight" style="font-size:2.75rem;line-height:1.1;">1:05<span class="text-xl font-semibold text-inksoft ml-1">PM</span></div>
+                    <div class="mt-4 text-teal font-medium text-sm">2nd Jumu'ah</div>
+                    <div id="jumuah-second" class="font-display font-bold text-ink tabular-nums tracking-tight" style="font-size:2.75rem;line-height:1.1;">1:15<span class="text-xl font-semibold text-inksoft ml-1">PM</span></div>
+                    <div id="jumuah-season" class="mt-3 text-inksoft text-xs">Summer timetable (BST)</div>
                 </div>
                 <div class="text-xs text-center text-inksoft mt-4 pt-4 border-t border-line">MB 531 • All students &amp; staff welcome</div>
             </div>
@@ -978,7 +981,7 @@
                 <ul class="space-y-4 text-sm">
                     <li class="flex gap-x-3">
                         <svg class="star-mark mt-1 flex-shrink-0" width="10" height="10" viewBox="0 0 100 100"><path d="M 50.0,4.0 L 57.3,32.4 L 82.5,17.5 L 67.6,42.7 L 96.0,50.0 L 67.6,57.3 L 82.5,82.5 L 57.3,67.6 L 50.0,96.0 L 42.7,67.6 L 17.5,82.5 L 32.4,57.3 L 4.0,50.0 L 32.4,42.7 L 17.5,17.5 L 42.7,32.4 Z" fill="#A9812E"/></svg>
-                        <span>Jumu'ah prayer at <strong>1:15 PM</strong> every Friday in MB 531.</span>
+                        <span id="jumuah-announcement">1st Jumu'ah at <strong>1:05 PM</strong> and 2nd Jumu'ah at <strong>1:15 PM</strong> every Friday in MB 531.</span>
                     </li>
                     <li class="flex gap-x-3">
                         <svg class="star-mark mt-1 flex-shrink-0" width="10" height="10" viewBox="0 0 100 100"><path d="M 50.0,4.0 L 57.3,32.4 L 82.5,17.5 L 67.6,42.7 L 96.0,50.0 L 67.6,57.3 L 82.5,82.5 L 57.3,67.6 L 50.0,96.0 L 42.7,67.6 L 17.5,82.5 L 32.4,57.3 L 4.0,50.0 L 32.4,42.7 L 17.5,17.5 L 42.7,32.4 Z" fill="#A9812E"/></svg>
@@ -1179,7 +1182,7 @@
                 </tbody>
             </table>
             </div>
-            <div class="text-[11px] text-inksoft/70 mt-3">On Fridays, Dhuhr is replaced by Jumu'ah • All times shown in 12-hour format</div>
+            <div class="text-[11px] text-inksoft/70 mt-3">On Fridays, Dhuhr is replaced by the 1st &amp; 2nd Jumu'ah (times follow the UK summer/winter timetable) • All times shown in 12-hour format</div>
 
             <div class="mt-6 text-center">
                 <button onclick="hideModal()" class="px-6 py-2.5 rounded-full bg-green text-paper text-sm font-medium hover:bg-green-deep transition-colors">Close</button>
@@ -1577,6 +1580,7 @@
                 if (cached) { surahList = JSON.parse(cached); renderSurahGrid(surahList); renderResumeBanner(); }
                 const r = await fetch(`${QURAN_API}/surah`);
                 const j = await r.json();
+                if (!j || !Array.isArray(j.data)) throw new Error('surah list unavailable');
                 surahList = j.data;
                 localStorage.setItem('bmet-qm-surah-index', JSON.stringify(surahList));
                 renderSurahGrid(surahList);
@@ -1867,6 +1871,71 @@
             }
         }
 
+        // ---- UK clock + Jumu'ah timetable ------------------------------------
+        // Europe/London switches between GMT (winter) and BST (summer) on its
+        // own — last Sunday of March / last Sunday of October — so everything
+        // below asks the browser's timezone database instead of hardcoding dates.
+        const UK_TZ = 'Europe/London';
+        function ukOffsetHours(date) {
+            // 0 = GMT (winter), 1 = BST (summer), for the calendar day of `date`.
+            const probe = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12));
+            try {
+                const parts = new Intl.DateTimeFormat('en-GB', { timeZone: UK_TZ, timeZoneName: 'short' }).formatToParts(probe);
+                const tz = (parts.find(x => x.type === 'timeZoneName') || {}).value || '';
+                if (/BST|\+1/.test(tz)) return 1;
+                if (/GMT|UTC/.test(tz)) return 0;
+            } catch (e) {}
+            // Fallback rule (EU/UK): BST from 01:00 UTC last Sunday of March to 01:00 UTC last Sunday of October.
+            const y = probe.getUTCFullYear();
+            const lastSun = (mon) => { const d = new Date(Date.UTC(y, mon + 1, 0, 1)); d.setUTCDate(d.getUTCDate() - d.getUTCDay()); return d; };
+            return (probe >= lastSun(2) && probe < lastSun(9)) ? 1 : 0;
+        }
+
+        // Jumu'ah at BMet: two congregations, and the whole timetable shifts
+        // 20 minutes earlier in winter (GMT).
+        const JUMUAH_TIMES = {
+            summer: { first: '13:05', second: '13:15', label: 'Summer timetable (BST)' },
+            winter: { first: '12:45', second: '13:00', label: 'Winter timetable (GMT)' }
+        };
+        function jumuahFor(date) {
+            return ukOffsetHours(date) === 1 ? JUMUAH_TIMES.summer : JUMUAH_TIMES.winter;
+        }
+        // The Friday people are asking about: today if it is Friday and the
+        // second Jumu'ah hasn't finished yet, otherwise the next one.
+        function upcomingFriday(from = new Date()) {
+            const d = new Date(from);
+            let add = (5 - d.getDay() + 7) % 7;
+            if (add === 0) {
+                const [h, m] = jumuahFor(d).second.split(':').map(Number);
+                if (d.getHours() * 60 + d.getMinutes() > h * 60 + m + 30) add = 7;
+            }
+            d.setDate(d.getDate() + add);
+            return d;
+        }
+        function jumuahBigHtml(t24) {
+            const [h, m] = t24.split(':').map(Number);
+            const h12 = h % 12 === 0 ? 12 : h % 12;
+            return `${h12}:${String(m).padStart(2, '0')}<span class="text-xl font-semibold text-inksoft ml-1">${h >= 12 ? 'PM' : 'AM'}</span>`;
+        }
+        function jumuahPairText(date) {
+            const j = jumuahFor(date);
+            return `${formatTime12(j.first)} &amp; ${formatTime12(j.second)}`;
+        }
+        function updateJumuahInfo() {
+            const j = jumuahFor(upcomingFriday());
+            const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+            set('jumuah-first', jumuahBigHtml(j.first));
+            set('jumuah-second', jumuahBigHtml(j.second));
+            set('jumuah-season', j.label);
+            const line = `1st Jumu'ah ${formatTime12(j.first)} &amp; 2nd Jumu'ah ${formatTime12(j.second)} every Friday in MB 531 — please arrive early.`;
+            document.querySelectorAll('.jumuah-notice').forEach(el => { el.innerHTML = line; });
+            set('jumuah-announcement', `1st Jumu'ah at <strong>${formatTime12(j.first)}</strong> and 2nd Jumu'ah at <strong>${formatTime12(j.second)}</strong> every Friday in MB 531.`);
+        }
+        // Friday cell for the weekly timetable (uses that specific date's GMT/BST).
+        function fridayDhuhrCell(d) {
+            return `<span class="text-brass font-semibold">${jumuahPairText(d)}</span> <span class="text-[10px] uppercase tracking-wide text-brass">Jumu'ah</span>`;
+        }
+
         // Update current date
         function updateCurrentDate() {
             const dateEl = document.getElementById('current-date');
@@ -1978,12 +2047,13 @@
             const noon = 12 - lon / 15 - eqt;
             return noon + direction * t;
         }
-        function computePrayerTimesLocalBmet(date, lat, lon, hanafiAsr) {
+        function computePrayerTimesLocalBmet(date, lat, lon, hanafiAsr, tzOffsetHours = 0) {
             const jd = julianDayBmet(date);
             const { declination } = sunPositionBmet(jd);
             const noon = 12 - lon / 15 - sunPositionBmet(jd).eqt;
             const asrFactor = hanafiAsr ? 2 : 1;
-            const asrAngle = 90 - Math.atan(1 / (asrFactor + Math.tan(Math.abs(lat - declination) * Math.PI / 180))) * 180 / Math.PI;
+            // Asr is the sun's altitude ABOVE the horizon, so it enters the sun-angle formula as a negative angle.
+            const asrAngle = -(Math.atan(1 / (asrFactor + Math.tan(Math.abs(lat - declination) * Math.PI / 180))) * 180 / Math.PI);
             const raw = {
                 Fajr: sunAngleTimeBmet(15, jd, lat, lon, -1),
                 Dhuhr: noon,
@@ -1991,11 +2061,12 @@
                 Maghrib: sunAngleTimeBmet(0.833, jd, lat, lon, 1),
                 Isha: sunAngleTimeBmet(15, jd, lat, lon, 1),
             };
+            // Sun-angle maths is in UTC, so shift into the right local clock
+            // (UK: +1h in BST, +0h in GMT) before formatting.
             const fmt = (h) => {
                 if (h == null) return '--:--';
-                h = ((h % 24) + 24) % 24;
-                const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
-                return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+                const total = ((Math.round((h + tzOffsetHours) * 60) % 1440) + 1440) % 1440;
+                return `${String(Math.floor(total / 60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`;
             };
             const out = {}; for (const k in raw) out[k] = fmt(raw[k]); return out;
         }
@@ -2046,14 +2117,17 @@
 
                 if (useCoords && currentCoords) {
                     const { lat, lon } = currentCoords;
-                    const date = new Date().toISOString().split('T')[0];
+                    const nd = new Date();
+                    const date = `${String(nd.getDate()).padStart(2, '0')}-${String(nd.getMonth() + 1).padStart(2, '0')}-${nd.getFullYear()}`;
                     url = `https://api.aladhan.com/v1/timings/${date}?latitude=${lat}&longitude=${lon}&method=2&school=${school}`;
                     locationText = "Your current location • Live via Aladhan API";
                     currentLocationMode = 'coords';
                 } else {
                     const city = "Birmingham";
                     const country = "United Kingdom";
-                    url = `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=2&school=${school}`;
+                    const nd = new Date();
+                    const dateStr = `${String(nd.getDate()).padStart(2, '0')}-${String(nd.getMonth() + 1).padStart(2, '0')}-${nd.getFullYear()}`;
+                    url = `https://api.aladhan.com/v1/timingsByCity/${dateStr}?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=2&school=${school}`;
                     currentLocationMode = 'city';
                 }
 
@@ -2089,7 +2163,9 @@
                 // right for *today's* actual sunrise/sunset rather than one fixed
                 // guess that's wrong on every day except the one it was written for.
                 const fallbackCoords = currentCoords || { lat: 52.4862, lon: -1.8904 }; // Birmingham
-                prayerTimesData = computePrayerTimesLocalBmet(new Date(), fallbackCoords.lat, fallbackCoords.lon, madhab === 'hanafi');
+                const nowFb = new Date();
+                const fbOffset = currentCoords ? -nowFb.getTimezoneOffset() / 60 : ukOffsetHours(nowFb);
+                prayerTimesData = computePrayerTimesLocalBmet(nowFb, fallbackCoords.lat, fallbackCoords.lon, madhab === 'hanafi', fbOffset);
                 isLoadingPrayerTimes = false;
 
                 if (locationLabel) {
@@ -3119,9 +3195,7 @@
                         return `<tr><td class="py-3 font-medium">${dayName}</td><td colspan="5" class="text-inksoft text-xs">Unavailable</td></tr>`;
                     }
                     const t = result.data.timings;
-                    const dhuhrCell = isFriday
-                        ? `<span class="text-brass font-semibold">${formatTime12(t.Dhuhr)}</span> <span class="text-[10px] uppercase tracking-wide text-brass">Jumu'ah</span>`
-                        : formatTime12(t.Dhuhr);
+                    const dhuhrCell = isFriday ? fridayDhuhrCell(d) : formatTime12(t.Dhuhr);
 
                     return `
                         <tr class="${isToday ? 'bg-paper2/60' : ''}">
@@ -3138,13 +3212,11 @@
                 // instead of leaving the whole table blank.
                 const fc = useCoords ? currentCoords : { lat: 52.4862, lon: -1.8904 };
                 tbody.innerHTML = days.map((d, i) => {
-                    const t = computePrayerTimesLocalBmet(d, fc.lat, fc.lon, madhab === 'hanafi');
+                    const t = computePrayerTimesLocalBmet(d, fc.lat, fc.lon, madhab === 'hanafi', useCoords ? -d.getTimezoneOffset() / 60 : ukOffsetHours(d));
                     const dayName = d.toLocaleDateString('en-GB', { weekday: 'long' });
                     const isFriday = d.getDay() === 5;
                     const isToday = i === 0;
-                    const dhuhrCell = isFriday
-                        ? `<span class="text-brass font-semibold">${formatTime12(t.Dhuhr)}</span> <span class="text-[10px] uppercase tracking-wide text-brass">Jumu'ah</span>`
-                        : formatTime12(t.Dhuhr);
+                    const dhuhrCell = isFriday ? fridayDhuhrCell(d) : formatTime12(t.Dhuhr);
                     return `
                         <tr class="${isToday ? 'bg-paper2/60' : ''}">
                             <td class="py-3 font-medium">${dayName}${isToday ? ' <span class="text-brass text-[10px] uppercase align-middle">Today</span>' : ''}</td>
@@ -3205,7 +3277,11 @@
 
         // Main initialization
         async function initializeWebsite() {
+            // Register the offline service worker straight away (before any
+            // network waits) so the app shell is cached on the very first visit.
+            if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(() => {}); }
             updateCurrentDate();
+            updateJumuahInfo();
             updateHijriDate();
             setupLogoClick();
             updateMadhabButton();
@@ -3250,6 +3326,7 @@
             setInterval(updateCountdown, 1000);
             setInterval(() => { renderPrayerTimesList(); calculateNextPrayer(); }, 60000);
             setInterval(updateCurrentDate, 60 * 60 * 1000);
+            setInterval(updateJumuahInfo, 5 * 60 * 1000);
             setInterval(updateHijriDate, 60 * 60 * 1000);
 
             document.addEventListener('keydown', function(e) {
