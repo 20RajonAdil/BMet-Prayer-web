@@ -4,17 +4,21 @@
 (function () {
     'use strict';
     var CFG = window.PETITION_CONFIG || {};
-    var SIGNED_KEY = 'bmet-petition-signed';
+    // "Round" lets you bring the banner back for everyone later: change round to 2, 3… in petition-config.js.
+    // (Old flags from before this version are ignored, so everybody sees the banner again now.)
+    var ROUND = String(CFG.round || 1);
+    var SIGNED_KEY = 'bmet-petition-signed-r' + ROUND;
+    var COOKIE = 'bmet_petition_signed_r' + ROUND;
     var banner = document.getElementById('petition-banner');
     if (!banner) return;
 
     function hasSigned() {
         try { if (localStorage.getItem(SIGNED_KEY)) return true; } catch (e) {}
-        return document.cookie.indexOf('bmet_petition_signed=1') > -1;
+        return document.cookie.indexOf(COOKIE + '=1') > -1;
     }
     function markSigned() {
         try { localStorage.setItem(SIGNED_KEY, String(Date.now())); } catch (e) {}
-        document.cookie = 'bmet_petition_signed=1; max-age=' + (60 * 60 * 24 * 365 * 5) + '; path=/; SameSite=Lax';
+        document.cookie = COOKIE + '=1; max-age=' + (60 * 60 * 24 * 365 * 5) + '; path=/; SameSite=Lax';
     }
     function removeBanner() { if (banner.parentNode) banner.parentNode.removeChild(banner); }
 
