@@ -62,6 +62,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Lateef:wght@400;700&family=Reem+Kufi:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Harmattan:wght@400;700&family=Markazi+Text:wght@400;500;600;700&family=Cairo:wght@400;600;700&family=Rakkas&display=swap');
 
         body {
@@ -632,7 +633,33 @@
             margin-bottom: 6px;
         }
         .qibla-search-result-btn:hover { background: #F3F1E6; }
-    </style>
+    
+        /* ---------- Ayah of the day (ported from Quran MAAR) ---------- */
+        .ay-card{position:relative;width:100%;display:flex;flex-direction:column;justify-content:center;padding:34px clamp(20px,4vw,40px) 30px;text-align:center;overflow:hidden;color:#f5f2ed;
+          border:1px solid rgba(245,242,237,.12);border-radius:999px 999px 24px 24px / 120px 120px 24px 24px;background:#121212;
+          box-shadow:0 24px 60px -30px rgba(120,10,25,.55);font-family:'Plus Jakarta Sans',Inter,sans-serif;}
+        .ay-card::before{content:'';position:absolute;inset:0 0 auto 0;height:150px;background:radial-gradient(120% 100% at 50% 0,rgba(207,51,66,.28),transparent 70%);pointer-events:none;}
+        .ay-card::after{content:'';position:absolute;inset:auto 0 0 0;height:120px;background:radial-gradient(120% 100% at 50% 100%,rgba(155,17,30,.18),transparent 70%);pointer-events:none;}
+        .ay-top{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:8px;margin:26px 0 18px;}
+        .ay-eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600;letter-spacing:.18em;color:#cf3342;}
+        .ay-line{width:18px;height:1px;background:#cf3342;display:inline-block;}
+        .ay-ref{font-size:12px;color:rgba(245,242,237,.6);letter-spacing:.06em;}
+        #ay-body,.ay-center{position:relative;z-index:1;}
+        .ay-ar{font-family:'Amiri','Noto Naskh Arabic',serif;font-size:clamp(24px,3vw,34px);line-height:2.1;color:#f5f2ed;margin:0 auto 14px;}
+        .ay-en{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:clamp(17px,1.8vw,21px);line-height:1.55;color:#e8e2da;margin:0 auto 24px;}
+        .ay-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;}
+        .ay-btn{font:600 14px 'Plus Jakarta Sans',Inter,sans-serif;padding:13px 24px;border-radius:999px;cursor:pointer;border:1px solid transparent;transition:transform .2s,opacity .2s;}
+        .ay-btn:hover{transform:translateY(-1px);}
+        .ay-btn:disabled{opacity:.6;cursor:wait;}
+        .ay-btn-red{background:linear-gradient(135deg,#8b0d1a,#a3121f);color:#fff;box-shadow:0 10px 24px -10px rgba(207,51,66,.7);}
+        .ay-btn-ghost{background:rgba(245,242,237,.05);border-color:rgba(245,242,237,.14);color:#f5f2ed;}
+        .ay-msg{font-size:12.5px;color:rgba(245,242,237,.65);width:100%;}
+        .ay-center{padding:36px 10px;display:flex;flex-direction:column;align-items:center;gap:14px;font-size:14px;color:rgba(245,242,237,.7);}
+        .ay-center[hidden],#ay-body[hidden]{display:none;}
+        .ay-spinner{width:28px;height:28px;border-radius:50%;border:3px solid rgba(245,242,237,.15);border-top-color:#cf3342;animation:aySpin .8s linear infinite;}
+        @keyframes aySpin{to{transform:rotate(360deg)}}
+        @media (max-width:640px){.ay-card{border-radius:44px 44px 22px 22px / 70px 70px 22px 22px;padding-top:26px}}
+</style>
 </head>
 <body class="bg-paper text-ink">
 
@@ -837,57 +864,28 @@
                     </div>
                 </div>
 
-                <!-- Team card -->
-                <div class="lg:col-span-5 tile-card team-card-glow rounded-3xl p-6 sm:p-7 flex flex-col shadow-sm">
-                    <div class="flex justify-center gap-6 mb-5">
-                        <div class="text-center">
-                            <div class="relative inline-block">
-                                <img src="Talha.png" class="w-16 h-16 rounded-full object-cover border-2 border-brass" alt="Site Owner">
-                                <div class="absolute -top-1 -right-1 w-5 h-5 bg-brass rounded-full flex items-center justify-center border-2 border-white">
-                                    <i class="fa-solid fa-crown text-white text-[9px]"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2">
-                                <div class="font-semibold text-sm">Talha</div>
-                                <div class="text-green text-[10px] font-medium uppercase tracking-wide">Founder and Student Lead</div>
-                            </div>
+                <!-- Ayah of the Day (same feature as Quran MAAR) -->
+                <div class="lg:col-span-5 flex">
+                    <div class="ay-card" id="ayah-card">
+                        <div class="ay-top">
+                            <div class="ay-eyebrow"><span class="ay-line"></span>AYAH OF THE DAY</div>
+                            <div class="ay-ref" id="ay-ref"></div>
                         </div>
-                        <div class="text-center">
-                            <div class="relative inline-block">
-                                <img src="adil.png" class="w-16 h-16 rounded-full object-cover border-2 border-green" alt="Developer">
-                                <div class="absolute -top-1 -right-1 w-5 h-5 bg-green rounded-full flex items-center justify-center border-2 border-white">
-                                    <i class="fa-solid fa-laptop-code text-white text-[9px]"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2">
-                                <div class="font-semibold text-sm">Md Adil Rajon</div>
-                                <div class="text-green text-[10px] font-medium uppercase tracking-wide">Wbsite developer and manager</div>
+                        <div id="ay-loading" class="ay-center"><div class="ay-spinner"></div></div>
+                        <div id="ay-error" class="ay-center" hidden>
+                            <p>Couldn't load today's ayah.</p>
+                            <button type="button" class="ay-btn ay-btn-ghost" id="ay-retry">Try again</button>
+                        </div>
+                        <div id="ay-body" hidden>
+                            <p class="ay-ar" id="ay-ar" lang="ar" dir="rtl"></p>
+                            <p class="ay-en" id="ay-en"></p>
+                            <div class="ay-actions">
+                                <button type="button" class="ay-btn ay-btn-red" id="ay-share">Share as image</button>
+                                <button type="button" class="ay-btn ay-btn-ghost" id="ay-copy">Copy text</button>
+                                <span class="ay-msg" id="ay-msg" role="status"></span>
                             </div>
                         </div>
                     </div>
-
-                    <div class="text-center mb-1 font-display font-semibold">BMet Prayer Time Team</div>
-                    <div class="text-inksoft text-xs text-center tracking-wide mb-4">Keeping the community connected</div>
-
-                    <div class="bg-green-soft border border-green/15 rounded-2xl p-4 mb-3">
-                        <div class="text-green text-xs font-semibold tracking-wider mb-1.5 flex items-center gap-x-1.5">
-                            <i class="fa-solid fa-heart"></i><span>A BEAUTIFUL REMINDER</span>
-                        </div>
-                        <p class="text-sm text-ink/80 leading-relaxed">
-                            "May Allah accept our efforts and make this platform a means of drawing our entire BMet family closer to Him."
-                        </p>
-                    </div>
-
-                    <div class="bg-brass-soft border border-brass/20 rounded-2xl p-4">
-                        <div class="text-brass text-xs font-semibold tracking-wider mb-1.5 flex items-center gap-x-1.5">
-                            <i class="fa-solid fa-shield-halved"></i><span>A STRONG COMMITMENT</span>
-                        </div>
-                        <p class="text-sm text-ink/80 leading-relaxed">
-                            "In the rush of college life, let us never compromise our Salah — our legacy of faith for the next generation."
-                        </p>
-                    </div>
-
-                    <div class="mt-auto pt-4 text-center text-inksoft text-xs italic">— With love &amp; dua from the BMet Prayer Team</div>
                 </div>
             </div>
         </div>
@@ -3787,6 +3785,149 @@
         langSelect.addEventListener('change', () => setTimeout(refreshOfflinePanel, 200));
         window.addEventListener('load', () => setTimeout(refreshOfflinePanel, 1500));
         window.addEventListener('online', refreshOfflinePanel);
+    
+        /* =========================================================
+           AYAH OF THE DAY — ported from Quran MAAR
+           One verse a day from a hand-picked list, "Share as image"
+           (a ready-to-post card made on the device) and "Copy text".
+        ========================================================= */
+        (function () {
+          const DAILY_AYAH_REFS = [
+            '2:255','2:286','2:152','2:153','2:186','2:45','2:156','2:201','3:8','3:26','3:139','3:159','3:173','3:200',
+            '4:103','5:8','6:162','7:23','7:56','8:46','9:51','10:62','11:88','12:87','13:28','14:7','15:9','16:90','16:128',
+            '17:23','17:80','18:10','20:114','21:87','23:118','24:35','25:63','28:24','29:69','31:17','33:41','33:56',
+            '39:10','39:53','40:60','41:34','42:36','49:13','51:56','55:13','57:4','59:22','59:23','64:11','65:2','65:3',
+            '93:3','94:5','94:6','112:1'
+          ];
+          const KEY = 'daily_ayah_v1';
+          const SITE_HOST_PATH = '20rajonadil.github.io/BMet-Prayer-web';
+          const $ = (id) => document.getElementById(id);
+          if (!$('ayah-card')) return;
+
+          const dayKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+          const refForToday = (d = new Date()) => DAILY_AYAH_REFS[Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5) % DAILY_AYAH_REFS.length];
+          const readCache = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { return null; } };
+          const writeCache = (a) => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch {} };
+
+          let ayah = null, busy = false, msgTimer;
+
+          function show(state) {
+            $('ay-loading').hidden = state !== 'loading';
+            $('ay-error').hidden = state !== 'error';
+            $('ay-body').hidden = state !== 'ok';
+          }
+          function render() {
+            $('ay-ref').textContent = ayah.surah + ' \u00B7 ' + ayah.surahNo + ':' + ayah.ayahNo;
+            $('ay-ar').textContent = ayah.arabic;
+            $('ay-en').textContent = ayah.english;
+            show('ok');
+          }
+          function flash(t) {
+            const m = $('ay-msg'); m.textContent = t;
+            clearTimeout(msgTimer); msgTimer = setTimeout(() => { m.textContent = ''; }, 3200);
+          }
+
+          function load() {
+            const key = dayKey(), ref = refForToday();
+            const cached = readCache();
+            if (cached && cached.day === key) { ayah = cached; render(); return; }
+            if (cached) { ayah = cached; render(); }   // show yesterday's while fetching (works offline too)
+            else show('loading');
+            fetch(QURAN_API + '/ayah/' + ref + '/editions/quran-uthmani,en.sahih')
+              .then((r) => r.json())
+              .then((j) => {
+                const ar = j.data[0], en = j.data[1];
+                ayah = { day: key, ref, arabic: ar.text, english: en.text, surah: ar.surah.englishName, surahAr: ar.surah.name, surahNo: ar.surah.number, ayahNo: ar.numberInSurah };
+                writeCache(ayah); render();
+              })
+              .catch(() => { if (!ayah) show('error'); });
+          }
+
+          function wrap(ctx, text, maxW) {
+            const words = text.split(/\s+/); const lines = []; let cur = '';
+            for (const w of words) {
+              const t = cur ? cur + ' ' + w : w;
+              if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
+            }
+            if (cur) lines.push(cur);
+            return lines;
+          }
+
+          async function imageBlob(a) {
+            try { await Promise.all([document.fonts.load('60px Amiri'), document.fonts.load('italic 40px "Instrument Serif"'), document.fonts.load('600 28px "Plus Jakarta Sans"')]); } catch {}
+            const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+            const ctx = cv.getContext('2d');
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, '#0b0b0b'); bg.addColorStop(.6, '#1a0a0e'); bg.addColorStop(1, '#4a0b14');
+            ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+            const glow = ctx.createRadialGradient(W / 2, 330, 20, W / 2, 330, 640);
+            glow.addColorStop(0, 'rgba(207,51,66,.35)'); glow.addColorStop(1, 'rgba(207,51,66,0)');
+            ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+            ctx.strokeStyle = 'rgba(245,242,237,.14)'; ctx.lineWidth = 2;
+            const ax = 70, ay = 70, aw = W - 140, ah = H - 140, ar = aw / 2;
+            ctx.beginPath(); ctx.moveTo(ax, ay + ah); ctx.lineTo(ax, ay + ar); ctx.arc(W / 2, ay + ar, ar, Math.PI, 0); ctx.lineTo(ax + aw, ay + ah); ctx.stroke();
+            let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+            for (let i = 0; i < 70; i++) { ctx.fillStyle = 'rgba(245,242,237,' + (.1 + rnd() * .4) + ')'; ctx.beginPath(); ctx.arc(rnd() * W, rnd() * H, .8 + rnd() * 1.6, 0, 7); ctx.fill(); }
+
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.fillStyle = '#cf3342'; ctx.font = '600 24px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('AYAH OF THE DAY', W / 2, 190);
+
+            const maxW = W - 300;
+            let size = 68, lines;
+            ctx.direction = 'rtl';
+            for (; size >= 30; size -= 2) { ctx.font = size + 'px Amiri, "Noto Naskh Arabic", serif'; lines = wrap(ctx, a.arabic, maxW); if (lines.length * size * 1.85 <= 560) break; }
+            ctx.fillStyle = '#f5f2ed';
+            const lh = size * 1.85, blockH = lines.length * lh;
+            let y = 250 + Math.max(0, (560 - blockH) / 2) + size;
+            lines.forEach((ln) => { ctx.fillText(ln, W / 2, y); y += lh; });
+            ctx.direction = 'ltr';
+
+            y = Math.max(y + 10, 860);
+            ctx.strokeStyle = 'rgba(207,51,66,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(W / 2 - 50, y); ctx.lineTo(W / 2 + 50, y); ctx.stroke();
+            let es = 40, el;
+            for (; es >= 24; es -= 2) { ctx.font = 'italic ' + es + 'px "Instrument Serif", Georgia, serif'; el = wrap(ctx, a.english, W - 280); if (el.length * es * 1.4 <= 1130 - (y + 40)) break; }
+            ctx.fillStyle = '#e8e2da'; let ey = y + 40 + es;
+            el.forEach((ln) => { ctx.fillText(ln, W / 2, ey); ey += es * 1.4; });
+
+            ctx.fillStyle = '#cf3342'; ctx.font = '600 26px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText(a.surah + ' \u00B7 ' + a.surahNo + ':' + a.ayahNo, W / 2, 1180);
+            ctx.fillStyle = 'rgba(245,242,237,.75)'; ctx.font = 'italic 40px "Instrument Serif", Georgia, serif';
+            ctx.fillText('BMet Prayer', W / 2, 1250);
+            ctx.fillStyle = 'rgba(245,242,237,.45)'; ctx.font = '500 22px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText(SITE_HOST_PATH, W / 2, 1288);
+            return new Promise((res) => cv.toBlob(res, 'image/png'));
+          }
+
+          async function shareImage() {
+            if (!ayah || busy) return;
+            busy = true; const btn = $('ay-share'); btn.disabled = true; btn.textContent = 'Making image\u2026';
+            try {
+              const blob = await imageBlob(ayah);
+              const file = new File([blob], 'ayah-' + ayah.surahNo + '-' + ayah.ayahNo + '.png', { type: 'image/png' });
+              if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try { await navigator.share({ files: [file], title: 'Ayah of the day', text: ayah.surah + ' ' + ayah.surahNo + ':' + ayah.ayahNo + ' \u2014 ' + SITE_HOST_PATH }); }
+                catch (e) { if (!(e && e.name === 'AbortError')) throw e; }
+              } else {
+                const url = URL.createObjectURL(blob), a = document.createElement('a');
+                a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 4000); flash('Image saved to your device.');
+              }
+            } catch { flash("Couldn't make the image. Try again."); }
+            busy = false; btn.disabled = false; btn.textContent = 'Share as image';
+          }
+
+          async function copyText() {
+            if (!ayah) return;
+            const t = ayah.arabic + '\n\n"' + ayah.english + '"\n\u2014 ' + ayah.surah + ' ' + ayah.surahNo + ':' + ayah.ayahNo + '\n' + SITE_HOST_PATH;
+            try { await navigator.clipboard.writeText(t); flash('Copied.'); } catch { flash("Couldn't copy."); }
+          }
+
+          $('ay-share').addEventListener('click', shareImage);
+          $('ay-copy').addEventListener('click', copyText);
+          $('ay-retry').addEventListener('click', load);
+          load();
+        })();
     </script>
 
 
