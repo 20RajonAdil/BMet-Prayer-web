@@ -45,7 +45,7 @@ const SHELL_FILES = [
     './', './index.html', './manifest.json', './tailwind.css',
     './bmet-logo.png', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
     './favicon.ico', './favicon-32x32.png', './favicon-16x16.png',
-    './Talha.png', './adil.png', './picture2.jpg'
+    './Talha.png', './adil.png', './picture2.jpg', './petition.js', './petition-config.js'
 ];
 // Third-party files the page needs to look and work right (icons, map code, fonts).
 const CDN_FILES = [
