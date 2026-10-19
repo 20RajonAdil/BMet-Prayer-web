@@ -32,8 +32,7 @@
 <main>
   <div class="card" id="login">
     <h2 style="margin-top:0">Sign in</h2>
-    <label for="em">Email</label><input id="em" type="email" autocomplete="username">
-    <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password">
+    <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" autofocus>
     <div class="err" id="loginErr"></div>
     <p><button class="btn primary" id="loginBtn">Sign in</button></p>
     <p class="muted">Only the petition organiser can view the signatures.</p>
@@ -62,7 +61,7 @@
   var BASE = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CFG.projectId || '') + '/databases/(default)/documents/petition';
   var STATEMENT = "We respectfully request permission to use the ground floor hall for approximately 20 minutes every Friday for Jumu'ah prayer, between 12:00 pm and 1:30 pm, because our current prayer room has limited space. The students below support this request.";
 
-  if (!CFG.projectId || !CFG.apiKey) { $('loginErr').textContent = 'The petition is not connected yet — fill in petition-config.js first (see SETUP-PETITION.md).'; $('loginBtn').disabled = true; }
+  if (!CFG.projectId || !CFG.apiKey || !CFG.adminEmail) { $('loginErr').textContent = 'The petition is not connected yet — fill in projectId, apiKey and adminEmail in petition-config.js first (see SETUP-PETITION.md).'; $('loginBtn').disabled = true; }
 
   function fmtDate(iso) { var p = String(iso || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : (iso || ''); }
   function safeSig(s) { return typeof s === 'string' && s.indexOf('data:image/png;base64,') === 0 ? s : ''; }
@@ -73,11 +72,11 @@
     $('loginErr').textContent = ''; $('loginBtn').disabled = true;
     fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + encodeURIComponent(CFG.apiKey), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: $('em').value.trim(), password: $('pw').value, returnSecureToken: true })
+      body: JSON.stringify({ email: CFG.adminEmail, password: $('pw').value, returnSecureToken: true })
     }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (x) {
         $('loginBtn').disabled = false;
-        if (!x.ok) { $('loginErr').textContent = 'Incorrect email or password.'; return; }
+        if (!x.ok) { $('loginErr').textContent = 'Incorrect password.'; return; }
         token = x.j.idToken; $('pw').value = '';
         $('login').style.display = 'none'; $('panel').style.display = ''; load();
       }).catch(function () { $('loginBtn').disabled = false; $('loginErr').textContent = 'Could not connect. Check your internet and try again.'; });

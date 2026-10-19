@@ -6,7 +6,7 @@ The petition form needs somewhere to save signatures. We use a free Firebase dat
 1. Go to https://console.firebase.google.com → **Add project** (name e.g. `bmet-petition`, turn Google Analytics off).
 2. **Build → Firestore Database → Create database** → *Production mode* → location **eur3 / europe-west2 (London)**.
 3. **Build → Authentication → Get started → Email/Password → Enable → Save.**
-   Then the **Users** tab → **Add user** → your email + a strong password. This is your admin login.
+   Then the **Users** tab → **Add user** → your email + the password you want to use for the admin page. On the admin page you only type that password (the email comes from `petition-config.js`).
 4. **Firestore → Rules** → replace everything with the rules below (put YOUR admin email) → **Publish**.
 5. **Project settings (gear) → General → Your apps → Web app (`</>`)** → register an app → copy `apiKey` and use the Project ID.
 6. Edit `petition-config.js` in the repo:
