@@ -25,6 +25,9 @@
     if (!(CFG.projectId && CFG.apiKey) || hasSigned()) { removeBanner(); return; }
     banner.hidden = false;
     document.getElementById('petition-open').addEventListener('click', openModal);
+    // Direct link: .../BMet-Prayer-web/#sign opens the form straight away (handy for WhatsApp / QR codes).
+    if (/^#sign/i.test(location.hash)) setTimeout(openModal, 400);
+    window.addEventListener('hashchange', function () { if (/^#sign/i.test(location.hash)) openModal(); });
 
     /* ---------- styles ---------- */
     var css = document.createElement('style');
