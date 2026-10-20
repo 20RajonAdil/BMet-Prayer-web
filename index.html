@@ -57,13 +57,11 @@
     </script>
 
     <link rel="stylesheet" href="tailwind.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="vendor/fonts/fonts.css">
+    <script src="vendor/leaflet/leaflet.js" defer></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Lateef:wght@400;700&family=Reem+Kufi:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Harmattan:wght@400;700&family=Markazi+Text:wght@400;500;600;700&family=Cairo:wght@400;600;700&family=Rakkas&display=swap');
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
@@ -3547,10 +3545,7 @@
         const OFF_DATA_CACHE = 'bmet-data-v1';
         const OFF_AUDIO_CACHE = 'bmet-audio-v1';
         const OFF_CDN_CACHE = 'bmet-cdn-v2';
-        const OFF_FONT_CSS = [
-            'https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Lateef:wght@400;700&family=Reem+Kufi:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Harmattan:wght@400;700&family=Markazi+Text:wght@400;500;600;700&family=Cairo:wght@400;600;700&family=Rakkas&display=swap',
-            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap'
-        ];
+        const OFF_FONT_CSS = []; // fonts are now bundled with the site
         const $ = (id) => document.getElementById(id);
         let offTextBusy = false, offAudioBusy = false, offAudioCancel = false, offSurahBusy = false;
 
@@ -3783,6 +3778,26 @@
             await caches.delete(OFF_AUDIO_CACHE);
             refreshOfflinePanel();
         };
+        /* Automatic offline saving: the Qur'an text (Arabic + the chosen translation)
+           is saved quietly in the background the first time the site is opened
+           online, and again whenever a new translation is picked. No button needed.
+           (Audio stays opt-in because it is hundreds of MB.) */
+        const autoTried = new Set();
+        async function autoSaveQuran() {
+            try {
+                if (offTextBusy || !navigator.onLine || !('caches' in window)) return;
+                const edition = langSelect.value;
+                if (autoTried.has(edition)) return;
+                const [ar, tr] = await Promise.all([countTextSaved(ARABIC_EDITION), countTextSaved(edition)]);
+                if (ar === 114 && tr === 114) return;
+                autoTried.add(edition);
+                if (!(await swReady())) return;
+                await downloadQuranText();
+            } catch (e) {}
+        }
+        window.addEventListener('load', () => setTimeout(autoSaveQuran, 6000));
+        window.addEventListener('online', () => setTimeout(autoSaveQuran, 1500));
+        langSelect.addEventListener('change', () => setTimeout(autoSaveQuran, 800));
         langSelect.addEventListener('change', () => setTimeout(refreshOfflinePanel, 200));
         window.addEventListener('load', () => setTimeout(refreshOfflinePanel, 1500));
         window.addEventListener('online', refreshOfflinePanel);
@@ -3812,6 +3827,29 @@
 
           let ayah = null, busy = false, msgTimer;
 
+          // Save the next 14 days of verses on the device, so the card keeps working offline.
+          const BANK = 'daily_ayah_bank_v1';
+          const readBank = () => { try { return JSON.parse(localStorage.getItem(BANK) || '{}'); } catch { return {}; } };
+          async function fetchAyah(ref, key) {
+            const j = await (await fetch(QURAN_API + '/ayah/' + ref + '/editions/quran-uthmani,en.sahih')).json();
+            const ar = j.data[0], en = j.data[1];
+            return { day: key, ref, arabic: ar.text, english: en.text, surah: ar.surah.englishName, surahAr: ar.surah.name, surahNo: ar.surah.number, ayahNo: ar.numberInSurah };
+          }
+          async function prefetchBank() {
+            if (!navigator.onLine) return;
+            const bank = readBank();
+            for (let i = 0; i < 14; i++) {
+              const d = new Date(); d.setDate(d.getDate() + i);
+              const key = dayKey(d);
+              if (bank[key]) continue;
+              try { bank[key] = await fetchAyah(refForToday(d), key); } catch { break; }
+            }
+            // keep only today and later
+            const today = dayKey();
+            Object.keys(bank).forEach((k) => { if (k < today) delete bank[k]; });
+            try { localStorage.setItem(BANK, JSON.stringify(bank)); } catch {}
+          }
+
           function show(state) {
             $('ay-loading').hidden = state !== 'loading';
             $('ay-error').hidden = state !== 'error';
@@ -3830,8 +3868,10 @@
 
           function load() {
             const key = dayKey(), ref = refForToday();
+            const banked = readBank()[key];
+            if (banked) { ayah = banked; writeCache(banked); render(); setTimeout(prefetchBank, 3000); return; }
             const cached = readCache();
-            if (cached && cached.day === key) { ayah = cached; render(); return; }
+            if (cached && cached.day === key) { ayah = cached; render(); setTimeout(prefetchBank, 3000); return; }
             if (cached) { ayah = cached; render(); }   // show yesterday's while fetching (works offline too)
             else show('loading');
             fetch(QURAN_API + '/ayah/' + ref + '/editions/quran-uthmani,en.sahih')
@@ -3839,7 +3879,7 @@
               .then((j) => {
                 const ar = j.data[0], en = j.data[1];
                 ayah = { day: key, ref, arabic: ar.text, english: en.text, surah: ar.surah.englishName, surahAr: ar.surah.name, surahNo: ar.surah.number, ayahNo: ar.numberInSurah };
-                writeCache(ayah); render();
+                writeCache(ayah); render(); setTimeout(prefetchBank, 3000);
               })
               .catch(() => { if (!ayah) show('error'); });
           }

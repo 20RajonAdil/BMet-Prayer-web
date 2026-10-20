@@ -30,34 +30,146 @@
 const NOTIFIED_STORE = 'bmet-notified-store';
 const SETTINGS_STORE = 'bmet-settings-store';
 const DB_NAME = 'bmet-prayer-db';
-const SHELL_CACHE = 'bmet-shell-v5';      // the app itself (HTML, icons, images, CSS)
-const RUNTIME_CACHE = 'bmet-runtime-v3';  // other same-origin files, refreshed whenever online
-const CDN_CACHE = 'bmet-cdn-v2';          // Font Awesome, Leaflet, Google Fonts
+const SHELL_CACHE = 'bmet-shell-v6';      // the app itself (HTML, icons, images, CSS)
+const RUNTIME_CACHE = 'bmet-runtime-v4';  // other same-origin files, refreshed whenever online
+const CDN_CACHE = 'bmet-cdn-v3';          // Font Awesome, Leaflet, Google Fonts
 const DATA_CACHE = 'bmet-data-v1';
 const AUDIO_CACHE = 'bmet-audio-v1';
 const AUDIO_HOST = 'archive.org';
-const KEEP_CACHES = [SHELL_CACHE, RUNTIME_CACHE, CDN_CACHE, DATA_CACHE, AUDIO_CACHE];
+const KEEP_CACHES = [SHELL_CACHE, RUNTIME_CACHE, CDN_CACHE, DATA_CACHE, AUDIO_CACHE, 'bmet-tiles-v1'];
 
 // Everything needed to open and use the site with no connection at all.
 // Each file is cached on its own, so one missing file can never stop the
 // whole install.
 const SHELL_FILES = [
-    './', './index.html', './manifest.json', './tailwind.css',
-    './bmet-logo.png', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
-    './favicon.ico', './favicon-32x32.png', './favicon-16x16.png',
-    './Talha.png', './adil.png', './picture2.jpg'
+    './',
+    './index.html',
+    './manifest.json',
+    './tailwind.css',
+    './bmet-logo.png',
+    './icon-192.png',
+    './icon-512.png',
+    './apple-touch-icon.png',
+    './favicon.ico',
+    './favicon-32x32.png',
+    './favicon-16x16.png',
+    './Talha.png',
+    './adil.png',
+    './picture2.jpg',
+    './404.html',
+    './picture1.jpg',
+    './vendor/fontawesome/css/all.min.css',
+    './vendor/fontawesome/webfonts/fa-brands-400.woff2',
+    './vendor/fontawesome/webfonts/fa-regular-400.woff2',
+    './vendor/fontawesome/webfonts/fa-solid-900.woff2',
+    './vendor/fontawesome/webfonts/fa-v4compatibility.woff2',
+    './vendor/fonts/amiri-arabic-400-normal.woff2',
+    './vendor/fonts/amiri-arabic-700-normal.woff2',
+    './vendor/fonts/amiri-latin-400-normal.woff2',
+    './vendor/fonts/amiri-latin-700-normal.woff2',
+    './vendor/fonts/amiri-latin-ext-400-normal.woff2',
+    './vendor/fonts/amiri-latin-ext-700-normal.woff2',
+    './vendor/fonts/amiri-quran-arabic-400-normal.woff2',
+    './vendor/fonts/amiri-quran-latin-400-normal.woff2',
+    './vendor/fonts/aref-ruqaa-arabic-400-normal.woff2',
+    './vendor/fonts/aref-ruqaa-arabic-700-normal.woff2',
+    './vendor/fonts/aref-ruqaa-latin-400-normal.woff2',
+    './vendor/fonts/aref-ruqaa-latin-700-normal.woff2',
+    './vendor/fonts/aref-ruqaa-latin-ext-400-normal.woff2',
+    './vendor/fonts/aref-ruqaa-latin-ext-700-normal.woff2',
+    './vendor/fonts/cairo-arabic-400-normal.woff2',
+    './vendor/fonts/cairo-arabic-600-normal.woff2',
+    './vendor/fonts/cairo-arabic-700-normal.woff2',
+    './vendor/fonts/cairo-latin-400-normal.woff2',
+    './vendor/fonts/cairo-latin-600-normal.woff2',
+    './vendor/fonts/cairo-latin-700-normal.woff2',
+    './vendor/fonts/cairo-latin-ext-400-normal.woff2',
+    './vendor/fonts/cairo-latin-ext-600-normal.woff2',
+    './vendor/fonts/cairo-latin-ext-700-normal.woff2',
+    './vendor/fonts/fonts.css',
+    './vendor/fonts/harmattan-arabic-400-normal.woff2',
+    './vendor/fonts/harmattan-arabic-700-normal.woff2',
+    './vendor/fonts/harmattan-latin-400-normal.woff2',
+    './vendor/fonts/harmattan-latin-700-normal.woff2',
+    './vendor/fonts/harmattan-latin-ext-400-normal.woff2',
+    './vendor/fonts/harmattan-latin-ext-700-normal.woff2',
+    './vendor/fonts/instrument-serif-latin-400-italic.woff2',
+    './vendor/fonts/instrument-serif-latin-400-normal.woff2',
+    './vendor/fonts/instrument-serif-latin-ext-400-italic.woff2',
+    './vendor/fonts/instrument-serif-latin-ext-400-normal.woff2',
+    './vendor/fonts/inter-latin-400-normal.woff2',
+    './vendor/fonts/inter-latin-500-normal.woff2',
+    './vendor/fonts/inter-latin-600-normal.woff2',
+    './vendor/fonts/inter-latin-700-normal.woff2',
+    './vendor/fonts/inter-latin-ext-400-normal.woff2',
+    './vendor/fonts/inter-latin-ext-500-normal.woff2',
+    './vendor/fonts/inter-latin-ext-600-normal.woff2',
+    './vendor/fonts/inter-latin-ext-700-normal.woff2',
+    './vendor/fonts/lateef-arabic-400-normal.woff2',
+    './vendor/fonts/lateef-arabic-700-normal.woff2',
+    './vendor/fonts/lateef-latin-400-normal.woff2',
+    './vendor/fonts/lateef-latin-700-normal.woff2',
+    './vendor/fonts/lateef-latin-ext-400-normal.woff2',
+    './vendor/fonts/lateef-latin-ext-700-normal.woff2',
+    './vendor/fonts/markazi-text-arabic-400-normal.woff2',
+    './vendor/fonts/markazi-text-arabic-500-normal.woff2',
+    './vendor/fonts/markazi-text-arabic-600-normal.woff2',
+    './vendor/fonts/markazi-text-arabic-700-normal.woff2',
+    './vendor/fonts/markazi-text-latin-400-normal.woff2',
+    './vendor/fonts/markazi-text-latin-500-normal.woff2',
+    './vendor/fonts/markazi-text-latin-600-normal.woff2',
+    './vendor/fonts/markazi-text-latin-700-normal.woff2',
+    './vendor/fonts/markazi-text-latin-ext-400-normal.woff2',
+    './vendor/fonts/markazi-text-latin-ext-500-normal.woff2',
+    './vendor/fonts/markazi-text-latin-ext-600-normal.woff2',
+    './vendor/fonts/markazi-text-latin-ext-700-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-arabic-400-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-arabic-500-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-arabic-600-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-arabic-700-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-latin-400-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-latin-500-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-latin-600-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-latin-700-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-latin-ext-400-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-latin-ext-500-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-latin-ext-600-normal.woff2',
+    './vendor/fonts/noto-naskh-arabic-latin-ext-700-normal.woff2',
+    './vendor/fonts/rakkas-arabic-400-normal.woff2',
+    './vendor/fonts/rakkas-latin-400-normal.woff2',
+    './vendor/fonts/rakkas-latin-ext-400-normal.woff2',
+    './vendor/fonts/reem-kufi-arabic-400-normal.woff2',
+    './vendor/fonts/reem-kufi-arabic-700-normal.woff2',
+    './vendor/fonts/reem-kufi-latin-400-normal.woff2',
+    './vendor/fonts/reem-kufi-latin-700-normal.woff2',
+    './vendor/fonts/reem-kufi-latin-ext-400-normal.woff2',
+    './vendor/fonts/reem-kufi-latin-ext-700-normal.woff2',
+    './vendor/fonts/scheherazade-new-arabic-400-normal.woff2',
+    './vendor/fonts/scheherazade-new-arabic-700-normal.woff2',
+    './vendor/fonts/scheherazade-new-latin-400-normal.woff2',
+    './vendor/fonts/scheherazade-new-latin-700-normal.woff2',
+    './vendor/fonts/scheherazade-new-latin-ext-400-normal.woff2',
+    './vendor/fonts/scheherazade-new-latin-ext-700-normal.woff2',
+    './vendor/fonts/space-grotesk-latin-400-normal.woff2',
+    './vendor/fonts/space-grotesk-latin-500-normal.woff2',
+    './vendor/fonts/space-grotesk-latin-600-normal.woff2',
+    './vendor/fonts/space-grotesk-latin-700-normal.woff2',
+    './vendor/fonts/space-grotesk-latin-ext-400-normal.woff2',
+    './vendor/fonts/space-grotesk-latin-ext-500-normal.woff2',
+    './vendor/fonts/space-grotesk-latin-ext-600-normal.woff2',
+    './vendor/fonts/space-grotesk-latin-ext-700-normal.woff2',
+    './vendor/leaflet/images/layers-2x.png',
+    './vendor/leaflet/images/layers.png',
+    './vendor/leaflet/images/marker-icon-2x.png',
+    './vendor/leaflet/images/marker-icon.png',
+    './vendor/leaflet/images/marker-shadow.png',
+    './vendor/leaflet/leaflet.css',
+    './vendor/leaflet/leaflet.js',
+    './vendor/react-dom.production.min.js',
+    './vendor/react.production.min.js'
 ];
 // Third-party files the page needs to look and work right (icons, map code, fonts).
-const CDN_FILES = [
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-solid-900.woff2',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-regular-400.woff2',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-brands-400.woff2',
-    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
-    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap',
-    'https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Lateef:wght@400;700&family=Reem+Kufi:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Harmattan:wght@400;700&family=Markazi+Text:wght@400;500;600;700&family=Cairo:wght@400;600;700&family=Rakkas&display=swap'
-];
+const CDN_FILES = []; // everything is bundled with the site now
 const CDN_HOSTS = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 const NETWORK_TIMEOUT_MS = 5000; // on a weak/captive connection, give up and use the saved copy
 
@@ -219,7 +331,37 @@ async function serveAudioWithRange(request) {
     catch (e) { return new Response('Offline', { status: 503, statusText: 'Offline' }); }
 }
 
-// Routing. Map tiles and anything else third-party (e.g. IP lookups) go
+
+// Map tiles: remember the ones already seen so the Qibla map still shows the
+// area you looked at when there is no connection (capped so it can't grow forever).
+const TILE_CACHE = 'bmet-tiles-v1';
+async function tileRequest(request) {
+    const cache = await caches.open(TILE_CACHE);
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    try {
+        const res = await fetch(request);
+        if (cacheable(res)) {
+            cache.put(request, res.clone()).then(async () => {
+                const keys = await cache.keys();
+                if (keys.length > 600) await Promise.all(keys.slice(0, keys.length - 600).map((k) => cache.delete(k)));
+            }).catch(() => {});
+        }
+        return res;
+    } catch (e) {
+        return new Response('', { status: 503, statusText: 'Offline' });
+    }
+}
+// Images from the other MAAR sites (app launcher icons): saved copy first, refreshed when online.
+async function imageRequest(request) {
+    const cache = await caches.open(RUNTIME_CACHE);
+    const cached = await cache.match(request);
+    const refresh = fetch(request).then((res) => { if (cacheable(res)) cache.put(request, res.clone()).catch(() => {}); return res; });
+    if (cached) { refresh.catch(() => {}); return cached; }
+    try { return await refresh; } catch (e) { return new Response('', { status: 503, statusText: 'Offline' }); }
+}
+
+// Routing. Anything else third-party (e.g. IP lookups) go
 // straight to the network untouched — far too many tiles to precache.
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
@@ -228,7 +370,11 @@ self.addEventListener('fetch', (event) => {
     if (DATA_HOSTS.includes(url.hostname)) { event.respondWith(dataRequest(event.request)); return; }
     if (url.hostname === AUDIO_HOST) { event.respondWith(serveAudioWithRange(event.request)); return; }
     if (CDN_HOSTS.includes(url.hostname)) { event.respondWith(cdnRequest(event.request)); return; }
-    if (url.origin !== self.location.origin) return;
+    if (url.hostname.endsWith('tile.openstreetmap.org')) { event.respondWith(tileRequest(event.request)); return; }
+    if (url.origin !== self.location.origin) {
+        if (event.request.destination === 'image') event.respondWith(imageRequest(event.request));
+        return;
+    }
 
     event.respondWith(appRequest(event.request));
 });
