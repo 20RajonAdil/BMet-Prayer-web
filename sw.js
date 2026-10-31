@@ -30,7 +30,7 @@
 const NOTIFIED_STORE = 'bmet-notified-store';
 const SETTINGS_STORE = 'bmet-settings-store';
 const DB_NAME = 'bmet-prayer-db';
-const SHELL_CACHE = 'bmet-shell-v8';      // the app itself (HTML, icons, images, CSS)
+const SHELL_CACHE = 'bmet-shell-v7';      // the app itself (HTML, icons, images, CSS)
 const RUNTIME_CACHE = 'bmet-runtime-v4';  // other same-origin files, refreshed whenever online
 const CDN_CACHE = 'bmet-cdn-v3';          // Font Awesome, Leaflet, Google Fonts
 const DATA_CACHE = 'bmet-data-v1';
