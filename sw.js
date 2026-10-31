@@ -30,7 +30,7 @@
 const NOTIFIED_STORE = 'bmet-notified-store';
 const SETTINGS_STORE = 'bmet-settings-store';
 const DB_NAME = 'bmet-prayer-db';
-const SHELL_CACHE = 'bmet-shell-v6';      // the app itself (HTML, icons, images, CSS)
+const SHELL_CACHE = 'bmet-shell-v7';      // the app itself (HTML, icons, images, CSS)
 const RUNTIME_CACHE = 'bmet-runtime-v4';  // other same-origin files, refreshed whenever online
 const CDN_CACHE = 'bmet-cdn-v3';          // Font Awesome, Leaflet, Google Fonts
 const DATA_CACHE = 'bmet-data-v1';
@@ -63,6 +63,8 @@ const SHELL_FILES = [
     './vendor/fontawesome/webfonts/fa-regular-400.woff2',
     './vendor/fontawesome/webfonts/fa-solid-900.woff2',
     './vendor/fontawesome/webfonts/fa-v4compatibility.woff2',
+    './vendor/fonts/marcellus-latin-400-normal.woff2',
+    './vendor/fonts/yeseva-one-latin-400-normal.woff2',
     './vendor/fonts/amiri-arabic-400-normal.woff2',
     './vendor/fonts/amiri-arabic-700-normal.woff2',
     './vendor/fonts/amiri-latin-400-normal.woff2',

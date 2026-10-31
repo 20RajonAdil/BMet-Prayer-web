@@ -68,7 +68,11 @@
             background-color: #F3F1E6;
             color: #16231D;
         }
-        .font-display { font-family: 'Space Grotesk', sans-serif; }
+        .font-display { font-family: 'Marcellus', Georgia, serif; font-weight: 400 !important; letter-spacing: 0.01em; }
+        /* Hero prayer name gets the bolder accent font */
+        #next-prayer-name.font-display { font-family: 'Yeseva One', 'Marcellus', Georgia, serif; letter-spacing: 0; }
+        /* BMet Prayer wordmark keeps its original font */
+        .bmet-keep.font-display { font-family: 'Space Grotesk', sans-serif; font-weight: 700 !important; letter-spacing: -0.025em; }
 
         html { scroll-behavior: smooth; }
         #prayer-times, #events-section, #jumuah-card, #announcements-card { scroll-margin-top: 96px; }
@@ -108,7 +112,7 @@
             letter-spacing: 1.5px; text-transform: uppercase;
         }
         .apply-banner-title {
-            font-family: 'Space Grotesk', sans-serif; font-weight: 800; color: #FFFFFF;
+            font-family: 'Marcellus', Georgia, serif; font-weight: 400; color: #FFFFFF;
             font-size: 1.5rem; line-height: 1.15; margin: 0 0 6px;
         }
         .apply-banner-title span { color: #F0CD6E; }
@@ -152,7 +156,7 @@
 
         /* ---- Offline Qur'an panel ---- */
         .offline-panel { background:#FFFFFF; border:1px solid #D9D4C0; border-radius:20px; padding:18px 20px; margin-bottom:20px; }
-        .offline-panel h3 { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.05rem; margin:0 0 2px; color:#16231D; }
+        .offline-panel h3 { font-family:'Marcellus',Georgia,serif; font-weight:400; font-size:1.05rem; margin:0 0 2px; color:#16231D; }
         .offline-panel .op-sub { font-size:12px; color:#5B6B63; margin:0 0 12px; }
         .op-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:12px 0; border-top:1px solid #ECE8D8; }
         .op-info { flex:1 1 240px; min-width:0; }
@@ -691,8 +695,8 @@
                     <img src="bmet-logo.png" class="w-10 h-10 object-contain rounded-lg" alt="BMET Logo" style="flex-shrink:0;">
                     <div style="min-width:0;">
                         <div class="flex items-baseline gap-x-1" style="white-space:nowrap;">
-                            <span class="font-display font-bold text-2xl tracking-tight text-ink">BMet</span>
-                            <span class="font-display font-bold text-2xl tracking-tight text-green">Prayer</span>
+                            <span class="bmet-keep font-display font-bold text-2xl tracking-tight text-ink">BMet</span>
+                            <span class="bmet-keep font-display font-bold text-2xl tracking-tight text-green">Prayer</span>
                         </div>
                         <div class="text-[10px] text-inksoft -mt-1 font-medium tracking-[1.5px] uppercase" style="white-space:nowrap;">Inspiring Futures</div>
                     </div>
