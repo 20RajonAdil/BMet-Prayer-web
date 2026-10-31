@@ -436,22 +436,6 @@
         #playSurahBtn { display: inline-flex; align-items: center; }
         #closeReader { display: inline-flex; align-items: center; }
 
-        /* ---- Calligraphic wordmark (Caprasimo, self-hosted) ---- */
-        .bmet-wordmark {
-            font-family: 'Caprasimo', 'Space Grotesk', Georgia, serif;
-            font-weight: 400;
-            font-size: 1.75rem;
-            line-height: 1.1;
-            letter-spacing: -0.01em;
-        }
-        .bmet-wordmark-accent {
-            background: linear-gradient(180deg, #2f9a5f 0%, #0e4b3a 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            color: #0e4b3a;
-        }
-
         /* ---- Header / navbar layout ----
            Written as plain CSS (not Tailwind utility classes) because this
            project ships a pre-built, static tailwind.css rather than the
@@ -707,8 +691,8 @@
                     <img src="bmet-logo.png" class="w-10 h-10 object-contain rounded-lg" alt="BMET Logo" style="flex-shrink:0;">
                     <div style="min-width:0;">
                         <div class="flex items-baseline gap-x-1" style="white-space:nowrap;">
-                            <span class="bmet-wordmark text-ink">BMet</span>
-                            <span class="bmet-wordmark bmet-wordmark-accent">Prayer</span>
+                            <span class="font-display font-bold text-2xl tracking-tight text-ink">BMet</span>
+                            <span class="font-display font-bold text-2xl tracking-tight text-green">Prayer</span>
                         </div>
                         <div class="text-[10px] text-inksoft -mt-1 font-medium tracking-[1.5px] uppercase" style="white-space:nowrap;">Inspiring Futures</div>
                     </div>
@@ -3951,7 +3935,7 @@
 
             ctx.fillStyle = BRASS; ctx.font = '600 26px Inter, sans-serif';
             ctx.fillText(a.surah + ' \u00B7 ' + a.surahNo + ':' + a.ayahNo, W / 2, 1180);
-            ctx.fillStyle = GREEN; ctx.font = '400 54px Caprasimo, Georgia, serif';
+            ctx.fillStyle = GREEN; ctx.font = '700 40px "Space Grotesk", Inter, sans-serif';
             ctx.fillText('BMet Prayer', W / 2, 1250);
             ctx.fillStyle = SOFT; ctx.font = '500 22px Inter, sans-serif';
             ctx.fillText(SITE_HOST_PATH, W / 2, 1288);
